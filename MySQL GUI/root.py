@@ -2,6 +2,7 @@ import mysql.connector as sql
 from tkinter import *
 from tkinter import messagebox
 
+# WINDOW 1
 window = Tk()
 
 passeye_bool = False
@@ -16,9 +17,18 @@ def show_password():
         pass_show.config(image=close_eye)
         pass_entry.config(show='*')
 
-def main_window():
-    window.geometry('1280x720')
+def database_window():
+    global cur1
+    global databases_list
+    window.geometry('1080x720')
     pass_frame.destroy()
+    cur1 = con1.cursor()
+    window.config(background='#000000')
+    database_label.pack()
+    cur1.execute('show databases')
+    databases_list = cur1.fetchall()
+    for i in range(0,len(databases_list)):
+        Button(window,text=databases_list[i][0],width=20,pady=10).pack()
 
 def password_submit(event=None):
     global con1
@@ -26,9 +36,8 @@ def password_submit(event=None):
     pass_entry.delete(0,END)
     try:
         con1 = sql.connect(host='localhost',user='root',passwd=passwd_value)
-        main_window()
-        messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nSuccesful connection established!')
-        window.unbind('<Return>')
+        database_window()
+        messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
     except:
         messagebox.showerror(title='Password mismatch',message='Password entered by user is wrong!')
 
@@ -37,6 +46,9 @@ open_eye = PhotoImage(file='eyeopen.png')
 window.config(background='#000000')
 
 window.geometry('380x50')
+
+database_label = Label(text='Select prefered \ndatabase',padx=20,pady=10,width=15)
+
 pass_frame =Frame(window,pady=10,bg='#000000')
 pass_lab = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
 pass_entry = Entry(pass_frame,width=20,bg='#FFFFFF',fg='#000000',font=('consolas',14),show='*')
