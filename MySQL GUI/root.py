@@ -20,16 +20,18 @@ def show_password():
 def database_window():
     global cur1
     global databases_list
-    window.geometry('1080x720')
+    window.geometry('1280x720')
     pass_frame.destroy()
     cur1 = con1.cursor()
-    window.config(background='#000000')
-    database_label.pack()
+    database_frame = Frame(window,pady=10,bg='#000000')
+    database_frame.pack()
+    Label(database_frame,text='Select prefered database',padx=20,pady=10,font=('Calibri',40)).grid(row=0,column=0,columnspan=4)
     cur1.execute('show databases')
     databases_list = cur1.fetchall()
     for i in range(0,len(databases_list)):
-        Button(window,text=databases_list[i][0],width=20,pady=10).pack()
-
+        c = i//4
+        database_radio = Radiobutton(database_frame,text=databases_list[i][0],value=i,font=('Impact',20),indicatoron=0,width=20)
+        database_radio.grid(row=(c+1),column=(i%4))
 def password_submit(event=None):
     global con1
     passwd_value = pass_entry.get()
@@ -47,9 +49,7 @@ window.config(background='#000000')
 
 window.geometry('380x50')
 
-database_label = Label(text='Select prefered \ndatabase',padx=20,pady=10,width=15)
-
-pass_frame =Frame(window,pady=10,bg='#000000')
+pass_frame = Frame(window,pady=10,bg='#000000')
 pass_lab = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
 pass_entry = Entry(pass_frame,width=20,bg='#FFFFFF',fg='#000000',font=('consolas',14),show='*')
 pass_show = Button(pass_frame,image=close_eye,bg='#000000',command=show_password,activebackground='#000000')
