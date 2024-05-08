@@ -18,11 +18,9 @@ def show_password():
         pass_entry.config(show='*')
 
 def database_window():
-    global cur1
     global databases_list
     window.geometry('1280x720')
     pass_frame.destroy()
-    cur1 = con1.cursor()
     database_frame = Frame(window,pady=10,bg='#000000')
     database_frame.pack()
     Label(database_frame,text='Select prefered database',padx=20,pady=10,font=('Calibri',40)).grid(row=0,column=0,columnspan=4)
@@ -32,12 +30,15 @@ def database_window():
         c = i//4
         database_radio = Radiobutton(database_frame,text=databases_list[i][0],value=i,font=('Impact',20),indicatoron=0,width=20)
         database_radio.grid(row=(c+1),column=(i%4))
+
 def password_submit(event=None):
     global con1
+    global cur1
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
     try:
         con1 = sql.connect(host='localhost',user='root',passwd=passwd_value)
+        cur1 = con1.cursor()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
     except:
