@@ -21,7 +21,12 @@ def database_window():
     database_frame = Frame(window,pady=10,bg='#000000')
     database_frame.pack()
     def database_submit():
-        print(database_int.get())
+        dbname = databases_list[database_int.get()][0]
+        cur1.execute(f'use {dbname}')
+        cur1.execute('show tables')
+        x = cur1.fetchall()
+        print(x)
+
     Label(database_frame,text='Select prefered database',padx=20,pady=10,font=('Calibri',40)).grid(row=0,column=0,columnspan=4)
     for i in range(0,len(databases_list)):
         c = i//4
