@@ -1,15 +1,61 @@
 import mysql.connector as sql
+import pickle
 from tkinter import *
 from tkinter import messagebox
-
 window = Tk()
+
+def rename_host_user():
+    def user_host_add_submit_funcn():
+        global username
+        global hostname
+        user = user_add_entry.get()
+        user_add_entry.delete(0,END)
+        userfile_objw = open("userfile.dat","wb")
+        pickle.dump(user,userfile_objw)
+        userfile_objw.close()
+        host = host_add_entry.get()
+        host_add_entry.delete(0,END)
+        hostfile_objw = open("hostfile.dat","wb")
+        pickle.dump(host,hostfile_objw)
+        hostfile_objw.close()
+
+        userfile_objr = open("userfile.dat","rb")
+        username = pickle.load(userfile_objr)
+        userfile_objr.close()
+        hostfile_objr = open("hostfile.dat","rb")
+        hostname = pickle.load(hostfile_objr)
+        hostfile_objr.close()
+        user_toplevel.destroy()
+
+    user_toplevel = Toplevel()
+    user_toplevel.title("Define host")
+    user_add_label = Label(user_toplevel,text="Name of user")
+    user_add_entry = Entry(user_toplevel)
+    host_add_label = Label(user_toplevel,text="Name of user")
+    host_add_entry = Entry(user_toplevel)
+    host_user_add_submit = Button(user_toplevel,text='Submit',bg='#444444',fg='#00FFFF',command=user_host_add_submit_funcn,activebackground='#444444',activeforeground='#00FFFF')
+    user_add_label.grid(row=0,column=0)
+    user_add_entry.grid(row=0,column=1)
+    host_add_label.grid(row=1,column=0)
+    host_add_entry.grid(row=1,column=1)
+    host_user_add_submit.grid(row=2,column=0,columnspan=2)
+
+try:
+    userfile_objr = open("userfile.dat","rb")
+    username = pickle.load(userfile_objr)
+    userfile_objr.close()
+    hostfile_objr = open("hostfile.dat","rb")
+    hostname = pickle.load(hostfile_objr)
+    hostfile_objr.close()
+except:
+    rename_host_user()
 
 window.resizable(False,False)
 
 passeye_bool = False
 
 def data_table():
-    global dbname
+    pass
 
 def show_password():
     global passeye_bool
@@ -32,6 +78,11 @@ def database_window():
             global dbname
             dbname = databases_list[database_int.get()][0]
             cur1.execute(f'use {dbname}')
+            Select_database.destroy()
+            database_frame.destroy()
+            new_database_frame.destroy()
+            del_database_frame.destroy()
+            data_table()
         databases_list = cur1.fetchall()
         database_int = IntVar()
         database_frame = Frame(window,pady=10,bg='#000000')
@@ -87,7 +138,7 @@ def password_submit(event=None):
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
     try:
-        con1 = sql.connect(host='localhost',user='root',passwd=passwd_value)
+        con1 = sql.connect(host=hostname,user=username,passwd=passwd_value)
         window.geometry('1360x765')
         pass_frame.destroy()
         database_window()
@@ -99,20 +150,21 @@ close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
 window.config(background='#000000')
 
-window.geometry('380x50')
+window.geometry('370x64')
 
 pass_frame = Frame(window,pady=10,bg='#000000')
-pass_lab = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
+pass_label = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
 pass_entry = Entry(pass_frame,width=20,font=('consolas',14),show='*')
 pass_show = Button(pass_frame,image=close_eye,bg='#0d0d0d',command=show_password,activebackground='#0d0d0d')
 pass_submit = Button(pass_frame,text='Submit',command=password_submit,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
-
+rename = Button(pass_frame,text='Redefine user and host',command=rename_host_user,bg='#444444',fg='#FFFF00',activebackground='#444444',activeforeground='#FFFF00')
 pass_entry.focus()
 pass_entry.bind('<Return>',password_submit)
 
-pass_lab.grid(row=0,column=0)
+pass_label.grid(row=0,column=0)
 pass_entry.grid(row=0,column=1)
 pass_show.grid(row=0,column=2)
 pass_submit.grid(row=0,column=3)
+rename.grid(row=1,column=0,columnspan=4)
 pass_frame.pack(fill=BOTH)
 window.mainloop()
