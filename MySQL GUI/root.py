@@ -2,8 +2,17 @@ import mysql.connector as sql
 import pickle
 from tkinter import *
 from tkinter import messagebox
+<<<<<<< HEAD
+from tkinter import ttk
+from idlelib.tooltip import Hovertip
+=======
+>>>>>>> f4a8cc111c4a89b29521b36c47521746aefe8a29
+
 window = Tk()
 
+window.resizable(False,False)
+
+passeye_bool = False
 def rename_host_user():
     def user_host_add_submit_funcn():
         global username
@@ -31,14 +40,19 @@ def rename_host_user():
     user_toplevel.title("Define host")
     user_add_label = Label(user_toplevel,text="Name of user")
     user_add_entry = Entry(user_toplevel)
-    host_add_label = Label(user_toplevel,text="Name of user")
+    try: user_add_entry.insert(0,username)
+    except: user_add_entry.insert(0,"root")
+    host_add_label = Label(user_toplevel,text="Name of host")
     host_add_entry = Entry(user_toplevel)
+    try: host_add_entry.insert(0,hostname)
+    except: host_add_entry.insert(0,"localhost")
     host_user_add_submit = Button(user_toplevel,text='Submit',bg='#444444',fg='#00FFFF',command=user_host_add_submit_funcn,activebackground='#444444',activeforeground='#00FFFF')
     user_add_label.grid(row=0,column=0)
     user_add_entry.grid(row=0,column=1)
     host_add_label.grid(row=1,column=0)
     host_add_entry.grid(row=1,column=1)
     host_user_add_submit.grid(row=2,column=0,columnspan=2)
+    user_add_entry.focus()
 
 try:
     userfile_objr = open("userfile.dat","rb")
@@ -50,12 +64,41 @@ try:
 except:
     rename_host_user()
 
-window.resizable(False,False)
-
-passeye_bool = False
-
 def data_table():
-    pass
+    def select_table():
+        pass
+    global back_button
+    global table_commands
+    table_int =IntVar()
+    style = ttk.Style()
+    style.configure('TNotebook.Tab', font=('URW Gothic L','18','bold') )
+    back_button = Button(window,image=back_image,bg='#0d0d0d',command=database_window_back,activebackground='#0d0d0d')
+    back_button.grid(row=0,column=0)
+    table_commands = ttk.Notebook(window)
+    show_tables = Frame(table_commands)
+    insert_in_table = Frame(table_commands)
+    delete_from_table = Frame(table_commands)
+    modify_table = Frame(table_commands)
+    update_values_table = Frame(table_commands)
+    add_table = Frame(table_commands)
+    table_commands.add(show_tables,text="Select current table")
+    table_commands.add(insert_in_table,text="Insert values")
+    table_commands.add(delete_from_table,text="Delete values")
+    table_commands.add(modify_table,text="Modify table")
+    table_commands.add(update_values_table,text="Update values")
+    table_commands.add(add_table,text="Add table")
+    table_commands.grid(row=0,column=1)
+    
+    table_frame = Frame(show_tables)
+    cur1.execute("show tables")
+    table_list = cur1.fetchall()
+    for index in range(0,len(table_list)):
+        new_row = index//5
+        table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=('Impact',20),indicatoron=0,width=20,command=select_table)
+        table_radio.grid(row=(new_row),column=(index%5),sticky=W)
+        Hovertip(table_radio,f'{table_list[index][0]}')
+    table_frame.pack()
+
 
 def show_password():
     global passeye_bool
@@ -66,6 +109,11 @@ def show_password():
     else:
         pass_show.config(image=close_eye)
         pass_entry.config(show='*')
+
+def database_window_back():
+    back_button.destroy()
+    table_commands.destroy()
+    database_window()
 
 def database_window():
     global cur1
@@ -91,6 +139,7 @@ def database_window():
             new_row = index//5
             database_radio = Radiobutton(database_frame,variable=database_int,text=databases_list[index][0],value=index,font=('Impact',20),indicatoron=0,width=20,command=database_submit)
             database_radio.grid(row=(new_row),column=(index%5))
+            Hovertip(database_radio,f'{databases_list[index][0]}')
     def add_new_database(event=None):
         new_database = new_database_entry.get()
         new_database_entry.delete(0,END)
@@ -139,15 +188,16 @@ def password_submit(event=None):
     pass_entry.delete(0,END)
     try:
         con1 = sql.connect(host=hostname,user=username,passwd=passwd_value)
-        window.geometry('1360x765')
+        window.geometry('1420x780')
         pass_frame.destroy()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
     except:
-        messagebox.showerror(title='Password mismatch',message='Password entered by user is wrong!')
+        messagebox.showerror(title='Parameters mismatch',message='Wrong Password or redefine username and hostname!')
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
+back_image = PhotoImage(file='back.png')
 window.config(background='#000000')
 
 window.geometry('370x64')
