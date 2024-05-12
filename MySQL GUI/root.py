@@ -5,8 +5,6 @@ from tkinter import messagebox
 <<<<<<< HEAD
 from tkinter import ttk
 from idlelib.tooltip import Hovertip
-=======
->>>>>>> f4a8cc111c4a89b29521b36c47521746aefe8a29
 
 window = Tk()
 
