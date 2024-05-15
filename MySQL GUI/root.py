@@ -2,7 +2,6 @@ import mysql.connector as sql
 import pickle
 from tkinter import *
 from tkinter import messagebox
-<<<<<<< HEAD
 from tkinter import ttk
 from idlelib.tooltip import Hovertip
 
