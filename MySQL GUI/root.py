@@ -10,6 +10,26 @@ window = Tk()
 window.resizable(False,False)
 
 passeye_bool = False
+
+constraint_list = ["Not Null","Primary Key","Unique","Default","No constraint"]
+
+datatype_list = ["Char","Varchar","Int","Float","Date"]
+
+unallowed_keywords = [",",".","[","]","(",")"]
+
+def checking(val):
+    if any(character.isdigit() for character in val.get()):
+        messagebox.showwarning(title="Error naming",message="Names with numbers not allowed")
+        return False
+    elif any(char in unallowed_keywords for char in val.get()):
+        messagebox.showwarning(title="Error naming",message=f"Names with {unallowed_keywords} not allowed")
+        return False
+    elif len(val.get().split()) > 1:
+        messagebox.showwarning(title="Error naming",message="Names with space not allowed")
+        return False
+    else:
+        return True
+
 def rename_host_user():
     def user_host_add_submit_funcn():
         global username
@@ -34,7 +54,8 @@ def rename_host_user():
         user_toplevel.destroy()
 
     user_toplevel = Toplevel()
-    user_toplevel.title("Define host")
+    user_toplevel.resizable(False,False)
+    user_toplevel.title("Define")
     user_add_label = Label(user_toplevel,text="Name of user")
     user_add_entry = Entry(user_toplevel)
     try: user_add_entry.insert(0,username)
@@ -62,40 +83,159 @@ except:
     rename_host_user()
 
 def data_table():
+    window.title("Table")
+    def table_add_command():
+        def fill_columns(event=None):
+            def col_checking():
+                for index in col_value_list:
+                    for i in range(len(index)):
+                        if i == 0:
+                            checking(index[i])
+                        if i == 1:
+                            if index[i].get() == datatype_list[-1]:
+                                index[i+1].delete(0,END)
+                                index[i+1].insert(0,"0")
+                                index[i+1].config(state=DISABLED)
+                col_submit.config(state=NORMAL)
+            def col_submission():
+                global col_main_list
+                col_main_list = list()
+                confirm_bool = True
+                for index in col_value_list:
+                    col_parameters = list()
+                    for i in range(len(index)):
+                        if i == 0:
+                            confirm_bool = checking(index[i])
+                        else:
+                            col_parameters.append(index[i].get())
+                    col_main_list.append(col_parameters)
+                if confirm_bool:
+                    print(col_main_list)
+                    add_table_toplevel.destroy()
+                    #str_execute = f"CREATE TABLE {table_to_add} ("
+                    #for column in col_main_list:
+                    #    str_execute + column[0] + "," + 
+                else:
+                    del col_main_list
+            try:
+                no_of_columns = int(number_entry.get())
+                col_value_list = list()
+                number_entry.config(state=DISABLED)
+                number_submit.config(state=DISABLED)
+                col_check = Button(add_table_toplevel,text='Check Columns',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=col_checking)
+                col_submit = Button(add_table_toplevel,text='Submit Columns',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=col_submission,state=DISABLED)
+                col_check.grid(row=3,column=0)
+                col_submit.grid(row=3,column=1)
+                for index in range(0,no_of_columns):
+                    col_vals = list()
+                    datatype_var = StringVar(add_table_toplevel)
+                    constraints_var = StringVar(add_table_toplevel)
+                    datatype_var.set(datatype_list[0])
+                    constraints_var.set(constraint_list[-1])
+                    new_row = index//2
+                    column_val = Frame(fill_cols)
+                    column_lab = Label(column_val,text=f"Enter column name {index+1}")
+                    column_entry = Entry(column_val)
+                    column_datatype = OptionMenu(column_val,datatype_var,*datatype_list)
+                    column_size = Entry(column_val)
+                    column_constraint = OptionMenu(column_val,constraints_var,*constraint_list)
+                    column_lab.grid(row=0,column=0)
+                    column_entry.grid(row=0,column=1)
+                    column_datatype.grid(row=0,column=2)
+                    column_size.grid(row=0,column=3)
+                    column_constraint.grid(row=0,column=4)
+                    column_val.grid(row=new_row,column=((index)%2))
+                    col_vals.append(column_entry)
+                    col_vals.append(datatype_var)
+                    col_vals.append(column_size)
+                    col_vals.append(constraints_var)
+                    col_value_list.append(col_vals)
+            except ValueError: messagebox.showerror(title='Wrong value',message='Enter an integer!')
+        def submit_table_name(event=None):
+            global table_to_add
+            check_for_no_mistakes = checking(table_name_entry)
+            if check_for_no_mistakes:
+                table_to_add = table_name_entry.get()
+                number_frame.grid(row=1,column=0)
+                table_name_entry.config(state=DISABLED)
+                table_name_submit.config(state=DISABLED)
+        add_table_toplevel = Toplevel()
+        table_name_frame = Frame(add_table_toplevel)
+        table_name_label = Label(table_name_frame,text="Name of table:")
+        table_name_entry = Entry(table_name_frame)
+        table_name_submit = Button(table_name_frame,text='Submit',command=submit_table_name,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+        number_frame = Frame(add_table_toplevel)
+        add_label = Label(number_frame,text="No.of rows:")
+        number_entry = Entry(number_frame)
+        number_submit = Button(number_frame,text='Submit',command=fill_columns,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+        add_label.grid(row=0,column=0)
+        number_entry.grid(row=0,column=1)
+        number_submit.grid(row=0,column=2)
+        number_entry.bind('<Return>',fill_columns)
+        table_name_submit.bind('<Return>',submit_table_name)
+        table_name_frame.grid(row=0,column=0)
+        table_name_label.grid(row=0,column=0)
+        table_name_entry.grid(row=0,column=1)
+        table_name_submit.grid(row=0,column=2)
+        fill_cols = Frame(add_table_toplevel)
+        fill_cols.grid(row=2,column=0)
+    def table_drop_command():
+        def drop_table_submit_command():
+            try:print(drop_listbox.get(drop_listbox.curselection()))
+            except:messagebox.showerror(title="No selection",message="Select a value to be deleted")
+        if len(table_list) == 0:
+            messagebox.showwarning(title="No tables",message="No table inside the selected database")
+        else:
+            drop_table_toplevel = Toplevel()
+            drop_table_selection = Frame(drop_table_toplevel,bg='#000000')
+            drop_table_label = Label(drop_table_selection,text="Select table to be deleted",font=('Calibri',30),fg='#FFFFFF',bg='#000000')
+            drop_table_submit = Button(drop_table_selection,text="Delete table",font=('calibri',20),command=drop_table_submit_command)
+            drop_table_frame = Frame(drop_table_selection,bg='#000000')
+            drop_listbox = Listbox(drop_table_frame,font=("calibri",20),bg="#101010",fg="#98F5F9")
+            for index in range(0,len(table_list)):
+                drop_listbox.insert(index,table_list[index][0])
+            drop_table_label.pack()
+            drop_listbox.pack()
+            drop_table_frame.pack()
+            drop_table_submit.pack(anchor=E)
+            drop_table_selection.pack()
+            
     def select_table():
         pass
-    global back_button
-    global table_commands
-    table_int =IntVar()
-    style = ttk.Style()
-    style.configure('TNotebook.Tab', font=('URW Gothic L','18','bold') )
-    back_button = Button(window,image=back_image,bg='#0d0d0d',command=database_window_back,activebackground='#0d0d0d')
-    back_button.grid(row=0,column=0)
-    table_commands = ttk.Notebook(window)
-    show_tables = Frame(table_commands)
-    insert_in_table = Frame(table_commands)
-    delete_from_table = Frame(table_commands)
-    modify_table = Frame(table_commands)
-    update_values_table = Frame(table_commands)
-    add_table = Frame(table_commands)
-    table_commands.add(show_tables,text="Select current table")
-    table_commands.add(insert_in_table,text="Insert values")
-    table_commands.add(delete_from_table,text="Delete values")
-    table_commands.add(modify_table,text="Modify table")
-    table_commands.add(update_values_table,text="Update values")
-    table_commands.add(add_table,text="Add table")
-    table_commands.grid(row=0,column=1)
-    
-    table_frame = Frame(show_tables)
-    cur1.execute("show tables")
-    table_list = cur1.fetchall()
-    for index in range(0,len(table_list)):
-        new_row = index//5
-        table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=('Impact',20),indicatoron=0,width=20,command=select_table)
-        table_radio.grid(row=(new_row),column=(index%5),sticky=W)
-        Hovertip(table_radio,f'{table_list[index][0]}')
-    table_frame.pack()
+    def table_frame_update():
+        global table_list
+        table_frame = Frame(show_tables,bg='#000000')
+        cur1.execute("show tables")
+        table_list = cur1.fetchall()
+        for index in range(0,len(table_list)):
+            new_row = index//5
+            table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=('Impact',20),indicatoron=0,width=20,command=select_table)
+            table_radio.grid(row=(new_row),column=(index%5),sticky=W)
+            Hovertip(table_radio,f'{table_list[index][0]}')
+        table_frame.pack()
 
+    global table_selection
+    table_int =IntVar()
+    table_selection = Frame(window,bg='#000000')
+    table_selection.pack()
+    add_and_drop = Frame(table_selection,bg='#000000')
+    add_table = Button(add_and_drop,text="Add a table",font=('calibri',20),command=table_add_command)
+    drop_table = Button(add_and_drop,text="Delete a table",font=('calibri',20),command=table_drop_command)
+    spacer1 = Label(add_and_drop,text="",padx=100,bg='#000000')
+    spacer2 = Label(add_and_drop,text="",pady=10,bg='#000000')
+    back_button = Button(table_selection,image=back_image,bg='#0d0d0d',command=database_window_back,activebackground='#0d0d0d')
+    back_button.grid(row=0,column=0)
+    table_select_label = Label(table_selection,text="Select a table",font=('Calibri',30),fg='#FFFFFF',bg='#000000')
+    table_select_label.grid(row=0,column=1)
+    show_tables = Frame(table_selection,bg='#000000')
+    add_table.grid(row=0,column=0)
+    spacer1.grid(row=0,column=2)
+    spacer2.grid(row=1,column=0,columnspan=3)
+    drop_table.grid(row=0,column=3)
+    add_and_drop.grid(row=1,column=0,columnspan=3)
+    show_tables.grid(row=2,column=0,columnspan=3)
+    table_frame_update()
+    
 
 def show_password():
     global passeye_bool
@@ -108,11 +248,11 @@ def show_password():
         pass_entry.config(show='*')
 
 def database_window_back():
-    back_button.destroy()
-    table_commands.destroy()
+    table_selection.destroy()
     database_window()
 
 def database_window():
+    window.title("Database")
     global cur1
     cur1 = con1.cursor()
     def database_frame_update():
@@ -154,7 +294,7 @@ def database_window():
             database_frame_update()
         except: messagebox.showerror(title="Database doesn't exist",message='Put an existing database!')
     
-    Select_database = Label(window,text='Select prefered database',padx=20,pady=10,font=('Calibri',40))
+    Select_database = Label(window,text='Select prefered database',padx=20,pady=10,font=('Calibri',40),bg='#000000',fg='#FFFFFF')
     Select_database.grid(row=0,column=0,columnspan=2)
     database_frame_update()
 
@@ -198,6 +338,7 @@ back_image = PhotoImage(file='back.png')
 window.config(background='#000000')
 
 window.geometry('370x64')
+window.title('Enter credentials')
 
 pass_frame = Frame(window,pady=10,bg='#000000')
 pass_label = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
