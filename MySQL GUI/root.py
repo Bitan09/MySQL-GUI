@@ -11,11 +11,26 @@ window.resizable(False,False)
 
 passeye_bool = False
 
-constraint_list = ["Not Null","Primary Key","Unique","Default","No constraint"]
+constraint_list = ["Not Null","Primary Key","Unique","No constraint"]
 
-datatype_list = ["Char","Varchar","Int","Float","Date"]
+datatype_list = ["Char","Varchar","Int","Date"]
 
 unallowed_keywords = [",",".","[","]","(",")"]
+
+def table_creation(tablename,tablelist):
+    command_exec = f"CREATE TABLE {tablename} ("
+    for column in tablelist:
+        command_exec += f"{column[0]} {column[1]}"
+        if column[1] != datatype_list[-1]:
+            command_exec += f"({column[2]})"
+        if column[3] != constraint_list[-1]:
+            command_exec += " "
+            command_exec += f"{column[3]}"
+        if column != tablelist[-1]:
+            command_exec += ", "
+        else:
+            command_exec += ")"
+    return command_exec
 
 def checking(val):
     if any(character.isdigit() for character in val.get()):
@@ -89,14 +104,30 @@ def data_table():
             def col_checking():
                 for index in col_value_list:
                     for i in range(len(index)):
+                        if index[i].get() == "":
+                            messagebox.showwarning(title="Error",message="Enter values")
+                            check_bool = False
+                            break
                         if i == 0:
-                            checking(index[i])
+                            check_bool = checking(index[i])
                         if i == 1:
                             if index[i].get() == datatype_list[-1]:
                                 index[i+1].delete(0,END)
-                                index[i+1].insert(0,"0")
+                                index[i+1].insert(0,"1")
                                 index[i+1].config(state=DISABLED)
-                col_submit.config(state=NORMAL)
+                            else:
+                                index[i+1].config(state=NORMAL)
+                        if i ==2:
+                            if (not index[i].get().isdigit()) and (int(index[i].get()) < 0):
+                                messagebox.showwarning(title="Error",message="Only natural numbers are allowed in size")
+                                check_bool = False
+                                break
+                    if not check_bool:
+                        break
+                if check_bool:
+                    col_submit.config(state=NORMAL)
+                else:
+                    col_submit.config(state=DISABLED)
             def col_submission():
                 global col_main_list
                 col_main_list = list()
@@ -104,20 +135,34 @@ def data_table():
                 for index in col_value_list:
                     col_parameters = list()
                     for i in range(len(index)):
+                        if index[i].get() == "":
+                            messagebox.showerror(title="Error",message="Enter values")
+                            confirm_bool = False
+                            break
                         if i == 0:
                             confirm_bool = checking(index[i])
+                            if confirm_bool:
+                                col_parameters.append(index[i].get())
+                            else:
+                                break
                         else:
                             col_parameters.append(index[i].get())
+                        if i == 2:
+                            if (not index[i].get().isdigit()) and (int(index[i].get()) < 0):
+                                messagebox.showerror(title="Error",message="Only integers are allowed in size")
+                                confirm_bool = False
+                                break
+                    if not confirm_bool:
+                        break
                     col_main_list.append(col_parameters)
                 if confirm_bool:
                     print(col_main_list)
                     add_table_toplevel.destroy()
-                    #str_execute = f"CREATE TABLE {table_to_add} ("
-                    #for column in col_main_list:
-                    #    str_execute + column[0] + "," + 
+                    str_execute = table_creation(table_to_add,col_main_list)
+                    print(str_execute)
                 else:
                     del col_main_list
-            try:
+            if number_entry.get().isdigit() and (int(number_entry.get()) > 0):
                 no_of_columns = int(number_entry.get())
                 col_value_list = list()
                 number_entry.config(state=DISABLED)
@@ -137,7 +182,7 @@ def data_table():
                     column_lab = Label(column_val,text=f"Enter column name {index+1}")
                     column_entry = Entry(column_val)
                     column_datatype = OptionMenu(column_val,datatype_var,*datatype_list)
-                    column_size = Entry(column_val)
+                    column_size = Entry(column_val,width=4)
                     column_constraint = OptionMenu(column_val,constraints_var,*constraint_list)
                     column_lab.grid(row=0,column=0)
                     column_entry.grid(row=0,column=1)
@@ -150,10 +195,13 @@ def data_table():
                     col_vals.append(column_size)
                     col_vals.append(constraints_var)
                     col_value_list.append(col_vals)
-            except ValueError: messagebox.showerror(title='Wrong value',message='Enter an integer!')
+            else: messagebox.showerror(title='Wrong value',message='Enter a natural number!')
         def submit_table_name(event=None):
             global table_to_add
             check_for_no_mistakes = checking(table_name_entry)
+            if table_name_entry.get() == "":
+                messagebox.showwarning(title="Blank value",message="Enter a name")
+                check_for_no_mistakes = False
             if check_for_no_mistakes:
                 table_to_add = table_name_entry.get()
                 number_frame.grid(row=1,column=0)
