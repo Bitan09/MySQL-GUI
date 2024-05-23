@@ -18,7 +18,7 @@ datatype_list = ["Char","Varchar","Int","Date"]
 unallowed_keywords = [",",".","[","]","(",")"]
 
 def table_creation(tablename,tablelist):
-    command_exec = f"CREATE TABLE {tablename} ("
+    command_exec = f"CREATE TABLE {tablename}("
     for column in tablelist:
         command_exec += f"{column[0]} {column[1]}"
         if column[1] != datatype_list[-1]:
@@ -156,10 +156,11 @@ def data_table():
                         break
                     col_main_list.append(col_parameters)
                 if confirm_bool:
-                    print(col_main_list)
                     add_table_toplevel.destroy()
                     str_execute = table_creation(table_to_add,col_main_list)
-                    print(str_execute)
+                    cur1.execute(str_execute)
+                    table_frame.destroy()
+                    table_frame_update()
                 else:
                     del col_main_list
             if number_entry.get().isdigit() and (int(number_entry.get()) > 0):
@@ -229,8 +230,13 @@ def data_table():
         fill_cols.grid(row=2,column=0)
     def table_drop_command():
         def drop_table_submit_command():
-            try:print(drop_listbox.get(drop_listbox.curselection()))
+            try:
+                deleted_table = drop_listbox.get(drop_listbox.curselection())
+                cur1.execute(f"DROP TABLE {deleted_table}")
+                table_frame.destroy()
+                table_frame_update()
             except:messagebox.showerror(title="No selection",message="Select a value to be deleted")
+
         if len(table_list) == 0:
             messagebox.showwarning(title="No tables",message="No table inside the selected database")
         else:
@@ -252,6 +258,7 @@ def data_table():
         pass
     def table_frame_update():
         global table_list
+        global table_frame
         table_frame = Frame(show_tables,bg='#000000')
         cur1.execute("show tables")
         table_list = cur1.fetchall()
