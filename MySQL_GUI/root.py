@@ -15,7 +15,51 @@ constraint_list = ["Not Null","Primary Key","Unique","No constraint"]
 
 datatype_list = ["Char","Varchar","Int","Date"]
 
-unallowed_keywords = [",",".","[","]","(",")"]
+unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
+
+def show_table(frame,tablename):
+    global columns
+    cur1.execute(f"select * from {tablename}")
+    columns = cur1.column_names
+    rows = cur1.fetchall()
+    scrollbary = ttk.Scrollbar(frame,orient=VERTICAL)
+    scrollbarx = ttk.Scrollbar(frame,orient=HORIZONTAL)
+    style_tree = ttk.Style()
+    style_tree.theme_use('clam')
+    style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC")
+    style_tree.map("Treeview",background=[('selected',"#01AB2C")])
+    table = ttk.Treeview(frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
+    table['columns'] = columns
+    table.column('#0',width=0,stretch=NO)
+    table.heading('#0',text='')
+    for i in range(len(columns)):
+        table.column(columns[i],anchor=W,width=250)
+        table.heading(columns[i],text=columns[i],anchor=W)
+    table.tag_configure('oddrow',background="#E6F5FE")
+    table.tag_configure('evenrow',background="#49BDFF")
+    for i in range(len(rows)):
+        if i%2 == 0:
+            table.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('evenrow'))
+        else:
+            table.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('oddrow'))
+    scrollbary.pack(side=LEFT,fill=Y)
+    scrollbarx.pack(side=TOP,fill=X)
+    table.pack(side=LEFT,fill=Y)
+    scrollbary.config(command=table.yview)
+    scrollbarx.config(command=table.xview)
+
+def insert_values(frame,tablename):
+    col_vals = list()
+    column_value = Frame(frame)
+    for i in range(len(columns)):
+        col_frame = Frame(column_value)
+        col_label = Label(col_frame,text=f"{columns[i]}:")
+        col_label.grid(row=0,column=0)
+        col_entry = Entry(col_frame)
+        col_vals.append(col_entry)
+        col_entry.grid(row=0,column=1)
+        col_frame.grid(row=i//3,column=i%3,sticky=W,padx=10,pady=10)
+    column_value.pack(anchor =NW)
 
 def table_creation(tablename,tablelist):
     command_exec = f"CREATE TABLE {tablename}("
@@ -94,8 +138,34 @@ try:
     hostfile_objr = open("hostfile.dat","rb")
     hostname = pickle.load(hostfile_objr)
     hostfile_objr.close()
-except:
-    rename_host_user()
+except:rename_host_user()
+
+def table_dml():
+    global tablename
+    global dml_commands_frame
+    tablename = table_list[table_int.get()][0]
+    dml_commands_frame = Frame(window,bg='#000000',width=1420,height=780)
+    dml_commands_frame.pack(fill=BOTH)
+    back_button = Button(dml_commands_frame,image=back_image,bg='#0d0d0d',activebackground='#0d0d0d',command=table_window_back)
+    back_button.pack(anchor=NW)
+    dml_label = Label(dml_commands_frame,text='DML COMMANDS SECTION',padx=20,pady=10,font=('Calibri',35),bg='#000000',fg='#FFFFFF',relief=RAISED)
+    dml_label.pack(anchor=N)
+    style_notebook = ttk.Style()
+    style_notebook.configure('TNotebook.Tab', font=('URW Gothic L','18','bold'))
+    table_commands = ttk.Notebook(dml_commands_frame,height=700)
+    show_values_table = Frame(table_commands,bg="#000000")
+    insert_in_table = Frame(table_commands,bg="#000000")
+    delete_from_table = Frame(table_commands,bg="#000000")
+    modify_table = Frame(table_commands,bg="#000000")
+    update_values_table = Frame(table_commands,bg="#000000")
+    table_commands.add(show_values_table,text="Show table")
+    table_commands.add(insert_in_table,text="Insert values")
+    table_commands.add(delete_from_table,text="Delete values")
+    table_commands.add(modify_table,text="Modify table")
+    table_commands.add(update_values_table,text="Update values")
+    table_commands.pack(fill=BOTH)
+    show_table(show_values_table,tablename)
+    insert_values(insert_in_table,tablename)
 
 def data_table():
     window.title("Table")
@@ -233,10 +303,10 @@ def data_table():
             try:
                 deleted_table = drop_listbox.get(drop_listbox.curselection())
                 cur1.execute(f"DROP TABLE {deleted_table}")
+                drop_table_toplevel.destroy()
                 table_frame.destroy()
                 table_frame_update()
             except:messagebox.showerror(title="No selection",message="Select a value to be deleted")
-
         if len(table_list) == 0:
             messagebox.showwarning(title="No tables",message="No table inside the selected database")
         else:
@@ -252,10 +322,10 @@ def data_table():
             drop_listbox.pack()
             drop_table_frame.pack()
             drop_table_submit.pack(anchor=E)
-            drop_table_selection.pack()
-            
+            drop_table_selection.pack()    
     def select_table():
-        pass
+        table_selection.destroy()
+        table_dml()
     def table_frame_update():
         global table_list
         global table_frame
@@ -270,6 +340,7 @@ def data_table():
         table_frame.pack()
 
     global table_selection
+    global table_int
     table_int =IntVar()
     table_selection = Frame(window,bg='#000000')
     table_selection.pack()
@@ -290,7 +361,6 @@ def data_table():
     add_and_drop.grid(row=1,column=0,columnspan=3)
     show_tables.grid(row=2,column=0,columnspan=3)
     table_frame_update()
-    
 
 def show_password():
     global passeye_bool
@@ -301,6 +371,10 @@ def show_password():
     else:
         pass_show.config(image=close_eye)
         pass_entry.config(show='*')
+
+def table_window_back():
+    dml_commands_frame.destroy()
+    data_table()
 
 def database_window_back():
     table_selection.destroy()
