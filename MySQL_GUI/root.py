@@ -19,16 +19,20 @@ unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
 
 def show_table(frame,tablename):
     global columns
+    global new_frame
+    new_frame = Frame(frame)
+    new_frame.pack(fill=Y,expand=1)
     cur1.execute(f"select * from {tablename}")
     columns = cur1.column_names
     rows = cur1.fetchall()
-    scrollbary = ttk.Scrollbar(frame,orient=VERTICAL)
-    scrollbarx = ttk.Scrollbar(frame,orient=HORIZONTAL)
+    scrollbary = ttk.Scrollbar(new_frame,orient=VERTICAL)
+    scrollbarx = ttk.Scrollbar(new_frame,orient=HORIZONTAL)
     style_tree = ttk.Style()
     style_tree.theme_use('clam')
-    style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC")
+    style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC",font=(None,15))
+    style_tree.configure("Treeview.Heading",font=(None,15))
     style_tree.map("Treeview",background=[('selected',"#01AB2C")])
-    table = ttk.Treeview(frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
+    table = ttk.Treeview(new_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
     table['columns'] = columns
     table.column('#0',width=0,stretch=NO)
     table.heading('#0',text='')
@@ -44,22 +48,72 @@ def show_table(frame,tablename):
             table.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('oddrow'))
     scrollbary.pack(side=LEFT,fill=Y)
     scrollbarx.pack(side=TOP,fill=X)
-    table.pack(side=LEFT,fill=Y)
+    table.pack(side=LEFT,fill=BOTH)
     scrollbary.config(command=table.yview)
     scrollbarx.config(command=table.xview)
 
+def insert_into_table(table,list,description,entries):
+    str_exec = f"INSERT INTO {table}("
+    for col in list[0]:
+        str_exec += col
+        if col != list[0][-1]:
+            str_exec += ","
+        else:
+            str_exec += ") "
+    str_exec += "VALUES("
+    for i in range(len(list[1])):
+        if ("char" in description[i]) or ("date" in description[i]):
+            str_exec += f'"{list[1][i]}"'
+        else:
+            str_exec += f"{list[1][i]}"
+        if list[1][i] != list[1][-1]:
+            str_exec += ","
+        else:
+            str_exec += ")"
+    try:
+        cur1.execute(str_exec)
+        for i in entries:
+            i.delete(0,END)
+        new_frame.destroy()
+        show_table(show_values_table,table)
+    except:messagebox.showerror(title="Error",message="There was an error executing\nPlease try again")
+    print(str_exec)
+
 def insert_values(frame,tablename):
+    cur1.execute(f"desc {tablename}")
+    description = cur1.fetchall()
+    def insert_submit():
+        value_list = list()
+        for i in range(len(col_vals)):
+            value_list.append(col_vals[i].get())
+        col_names = list()
+        desc = list()
+        for val in range(len(value_list)):
+            if value_list[val] != "":
+                col_names.append(description[val][0])
+                desc.append(description[val][1])
+        if len(col_names) != 0:
+            for j in range(value_list.count('')):
+                value_list.remove('')
+            cols = [col_names,value_list]
+            insert_into_table(tablename,cols,desc,col_vals)
+        else:
+            messagebox.showerror(title="NO values",message="Enter values to proceed")
+        
     col_vals = list()
     column_value = Frame(frame)
     for i in range(len(columns)):
         col_frame = Frame(column_value)
-        col_label = Label(col_frame,text=f"{columns[i]}:")
+        col_label = Label(col_frame,text=f"{columns[i]}:",font=('calibri',20))
         col_label.grid(row=0,column=0)
-        col_entry = Entry(col_frame)
+        col_entry = Entry(col_frame,font=('calibri',15))
         col_vals.append(col_entry)
         col_entry.grid(row=0,column=1)
-        col_frame.grid(row=i//3,column=i%3,sticky=W,padx=10,pady=10)
-    column_value.pack(anchor =NW)
+        Hovertip(col_entry,f"{description[i][1:4:2]}")
+        col_frame.grid(row=i//2,column=i%2,sticky=W,padx=10,pady=10)
+    column_value.pack(anchor=NW)
+    submit_button = Button(frame,text='Submit',command=insert_submit,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+    submit_button.pack(anchor=SW)
 
 def table_creation(tablename,tablelist):
     command_exec = f"CREATE TABLE {tablename}("
@@ -143,6 +197,7 @@ except:rename_host_user()
 def table_dml():
     global tablename
     global dml_commands_frame
+    global show_values_table
     tablename = table_list[table_int.get()][0]
     dml_commands_frame = Frame(window,bg='#000000',width=1420,height=780)
     dml_commands_frame.pack(fill=BOTH)
@@ -455,6 +510,7 @@ def password_submit(event=None):
     try:
         con1 = sql.connect(host=hostname,user=username,passwd=passwd_value)
         window.geometry('1420x780')
+        window.resizable(True,True)
         pass_frame.destroy()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
@@ -485,3 +541,5 @@ pass_submit.grid(row=0,column=3)
 rename.grid(row=1,column=0,columnspan=4)
 pass_frame.pack(fill=BOTH)
 window.mainloop()
+con1.commit()
+con1.close()
