@@ -17,20 +17,22 @@ datatype_list = ["Char","Varchar","Int","Date"]
 
 unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
 
+conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not null"]
+
 def show_table(frame,tablename):
     global columns
     global new_frame
-    new_frame = Frame(frame)
-    new_frame.pack(fill=Y,expand=1)
     cur1.execute(f"select * from {tablename}")
     columns = cur1.column_names
     rows = cur1.fetchall()
+    new_frame = Frame(frame)
+    new_frame.pack(fill=Y,expand=1)
     scrollbary = ttk.Scrollbar(new_frame,orient=VERTICAL)
     scrollbarx = ttk.Scrollbar(new_frame,orient=HORIZONTAL)
     style_tree = ttk.Style()
     style_tree.theme_use('clam')
     style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC",font=(None,15))
-    style_tree.configure("Treeview.Heading",font=(None,15))
+    style_tree.configure("Treeview.Heading",font=(None,15,"bold"))
     style_tree.map("Treeview",background=[('selected',"#01AB2C")])
     table = ttk.Treeview(new_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
     table['columns'] = columns
@@ -77,7 +79,6 @@ def insert_into_table(table,list,description,entries):
         new_frame.destroy()
         show_table(show_values_table,table)
     except:messagebox.showerror(title="Error",message="There was an error executing\nPlease try again")
-    print(str_exec)
 
 def insert_values(frame,tablename):
     cur1.execute(f"desc {tablename}")
@@ -114,6 +115,29 @@ def insert_values(frame,tablename):
     column_value.pack(anchor=NW)
     submit_button = Button(frame,text='Submit',command=insert_submit,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
     submit_button.pack(anchor=SW)
+
+def delete_values(frame,table):
+    def truncate_confirm():
+        if messagebox.askyesno(title="confirm deletion",message="Do you want to delete all the values"):
+            cur1.execute(f"truncate {table}")
+            new_frame.destroy()
+            show_table(show_values_table,table)    
+    truncate_button = Button(frame,text='Delete all values',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=truncate_confirm)
+    truncate_button.pack(pady=10)
+    delete_frame = Frame(frame)
+    delete_frame.pack()
+    text_label =Label(delete_frame,text="Delete where")
+    text_label.grid(row=0,column=0)
+    col = StringVar()
+    col.set(columns[0])
+    col_name = OptionMenu(delete_frame,col,*columns)
+    col_name.grid(row=0,column=1)
+
+def modify_table_(frame,table):
+    pass
+
+def update_values(frame,table):
+    pass
 
 def table_creation(tablename,tablelist):
     command_exec = f"CREATE TABLE {tablename}("
@@ -203,7 +227,7 @@ def table_dml():
     dml_commands_frame.pack(fill=BOTH)
     back_button = Button(dml_commands_frame,image=back_image,bg='#0d0d0d',activebackground='#0d0d0d',command=table_window_back)
     back_button.pack(anchor=NW)
-    dml_label = Label(dml_commands_frame,text='DML COMMANDS SECTION',padx=20,pady=10,font=('Calibri',35),bg='#000000',fg='#FFFFFF',relief=RAISED)
+    dml_label = Label(dml_commands_frame,text=tablename,padx=20,pady=10,font=('Calibri',35,'bold'),bg='#000000',fg='#FFFFFF',relief=RAISED)
     dml_label.pack(anchor=N)
     style_notebook = ttk.Style()
     style_notebook.configure('TNotebook.Tab', font=('URW Gothic L','18','bold'))
@@ -221,6 +245,9 @@ def table_dml():
     table_commands.pack(fill=BOTH)
     show_table(show_values_table,tablename)
     insert_values(insert_in_table,tablename)
+    delete_values(delete_from_table,tablename)
+    modify_table_(modify_table,tablename)
+    update_values(update_values_table,tablename)
 
 def data_table():
     window.title("Table")
@@ -470,13 +497,14 @@ def database_window():
             database_frame_update()
         except: messagebox.showerror(title='Wrong name',message='Put a better name!')
     def drop_database(event=None):
-        del_database = del_database_entry.get()
-        del_database_entry.delete(0,END)
-        try:
-            cur1.execute(f'drop database {del_database}')
-            database_frame.destroy()
-            database_frame_update()
-        except: messagebox.showerror(title="Database doesn't exist",message='Put an existing database!')
+        if messagebox.askyesno(title="Confirm deletion",message="Do you want ot delete the database"):
+            del_database = del_database_entry.get()
+            del_database_entry.delete(0,END)
+            try:
+                cur1.execute(f'drop database {del_database}')
+                database_frame.destroy()
+                database_frame_update()
+            except: messagebox.showerror(title="Database doesn't exist",message='Put an existing database!')
     
     Select_database = Label(window,text='Select prefered database',padx=20,pady=10,font=('Calibri',40),bg='#000000',fg='#FFFFFF')
     Select_database.grid(row=0,column=0,columnspan=2)
@@ -541,5 +569,7 @@ pass_submit.grid(row=0,column=3)
 rename.grid(row=1,column=0,columnspan=4)
 pass_frame.pack(fill=BOTH)
 window.mainloop()
-con1.commit()
-con1.close()
+try:
+    con1.commit()
+    con1.close()
+except:pass
