@@ -19,6 +19,24 @@ unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
 
 conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not null"]
 
+def where_statement(columnname,condition,mainvalue):
+    str_to_exec = f"WHERE {columnname} {condition} "
+    if condition in conditions[0:6]:
+        str_to_exec += f'"{mainvalue}"'
+    elif condition == conditions[6]:
+        str_to_exec += f'"{mainvalue[0]}" and "{mainvalue[1]}"'
+    elif condition == conditions[7]:
+        for i in range(len(mainvalue)):
+            if mainvalue [i] == mainvalue[0]:
+                str_to_exec += f'("{mainvalue[i]}",'
+            elif mainvalue [i] == mainvalue[-1]:
+                str_to_exec += f'"{mainvalue[i]}")'
+            else:
+                str_to_exec += f'"{mainvalue[i]}",'
+    elif condition == conditions[8]:
+        str_to_exec += f'"{mainvalue}"'
+    return str_to_exec
+
 def show_table(frame,tablename):
     global columns
     global new_frame
@@ -54,7 +72,7 @@ def show_table(frame,tablename):
     scrollbary.config(command=table.yview)
     scrollbarx.config(command=table.xview)
 
-def insert_into_table(table,list,description,entries):
+def insert_into_table(table,list,entries):
     str_exec = f"INSERT INTO {table}("
     for col in list[0]:
         str_exec += col
@@ -64,10 +82,7 @@ def insert_into_table(table,list,description,entries):
             str_exec += ") "
     str_exec += "VALUES("
     for i in range(len(list[1])):
-        if ("char" in description[i]) or ("date" in description[i]):
-            str_exec += f'"{list[1][i]}"'
-        else:
-            str_exec += f"{list[1][i]}"
+        str_exec += f'"{list[1][i]}"'
         if list[1][i] != list[1][-1]:
             str_exec += ","
         else:
@@ -81,6 +96,7 @@ def insert_into_table(table,list,description,entries):
     except:messagebox.showerror(title="Error",message="There was an error executing\nPlease try again")
 
 def insert_values(frame,tablename):
+    global description
     cur1.execute(f"desc {tablename}")
     description = cur1.fetchall()
     def insert_submit():
@@ -88,16 +104,14 @@ def insert_values(frame,tablename):
         for i in range(len(col_vals)):
             value_list.append(col_vals[i].get())
         col_names = list()
-        desc = list()
         for val in range(len(value_list)):
             if value_list[val] != "":
                 col_names.append(description[val][0])
-                desc.append(description[val][1])
         if len(col_names) != 0:
             for j in range(value_list.count('')):
                 value_list.remove('')
             cols = [col_names,value_list]
-            insert_into_table(tablename,cols,desc,col_vals)
+            insert_into_table(tablename,cols,col_vals)
         else:
             messagebox.showerror(title="NO values",message="Enter values to proceed")
         
@@ -121,17 +135,146 @@ def delete_values(frame,table):
         if messagebox.askyesno(title="confirm deletion",message="Do you want to delete all the values"):
             cur1.execute(f"truncate {table}")
             new_frame.destroy()
-            show_table(show_values_table,table)    
-    truncate_button = Button(frame,text='Delete all values',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=truncate_confirm)
+            show_table(show_values_table,table)
+
+    truncate_button = Button(frame,text='Delete all values',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=truncate_confirm)
     truncate_button.pack(pady=10)
     delete_frame = Frame(frame)
     delete_frame.pack()
+
+    delete_table_frame = Frame(frame)
+    delete_table_frame.pack()
+
+    scrollbary = ttk.Scrollbar(delete_table_frame,orient=VERTICAL)
+    scrollbarx = ttk.Scrollbar(delete_table_frame,orient=HORIZONTAL)
+    delete_treeview = ttk.Treeview(delete_table_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
+    delete_treeview['columns'] = columns
+    delete_treeview.column('#0',width=0,stretch=NO)
+    delete_treeview.heading('#0',text='')
+    for i in range(len(columns)):
+        delete_treeview.column(columns[i],anchor=W,width=250)
+        delete_treeview.heading(columns[i],text=columns[i],anchor=W)
+    delete_treeview.tag_configure('oddrow',background="#E6F5FE")
+    delete_treeview.tag_configure('evenrow',background="#49BDFF")
+    scrollbary.pack(side=LEFT,fill=Y)
+    scrollbarx.pack(side=TOP,fill=X)
+    delete_treeview.pack(side=LEFT,fill=BOTH)
+    scrollbary.config(command=delete_treeview.yview)
+    scrollbarx.config(command=delete_treeview.xview)
+
+    def enter_entries(event=None):
+        global entry_list
+        entry_list = list()
+        try:
+            no_of_rows = int(no_of_rows_entry.get())
+            if no_of_rows <= 0:
+                messagebox.showerror(title="Enter number",message="Enter a natural number")
+            else:
+                no_of_rows_label.grid_forget()
+                no_of_rows_entry.grid_forget()
+                for i in range(no_of_rows):
+                    entrybox = Entry(in_frame,font=(None,15))
+                    entrybox.grid(row=i//3,column=i%3)
+                    entry_list.append(entrybox)
+        except ValueError: messagebox.showerror(title="Enter number",message="Enter a natural number")
+
+    relational_frame = Frame(delete_frame)
+    relational_frame.grid(row=0,column=3)
+    relational_entry = Entry(relational_frame,font=(None,15))
+    relational_entry.grid(row=0,column=0)
+    between_frame = Frame(delete_frame)
+    between_entry_1 = Entry(between_frame,font=(None,15))
+    and_label = Label(between_frame,text="and",font=(None,15))
+    between_entry_2 = Entry(between_frame,font=(None,15))
+    between_entry_1.grid(row=0,column=0)
+    and_label.grid(row=0,column=1)
+    between_entry_2.grid(row=0,column=2)
+    in_frame = Frame(delete_frame)
+    no_of_rows_label = Label(in_frame,text="Enter no.of args (Press enter after entering):")
+    no_of_rows_entry = Entry(in_frame,font=(None,15),width=3)
+    no_of_rows_entry.bind('<Return>',enter_entries)
+    no_of_rows_label.grid(row=0,column=0)
+    no_of_rows_entry.grid(row=0,column=1)
+    like_frame = Frame(delete_frame)
+    like_entry = Entry(like_frame,font=(None,15))
+    like_entry.grid(row=0,column=0)
+    framelist = [relational_frame,between_frame,in_frame,like_frame]
+
+    def show_delete_table():
+        str_exec = f"select * from {table} "
+        if operator_var.get() in conditions[0:6]:
+            str_where = where_statement(col.get(),operator_var.get(),relational_entry.get())
+        elif operator_var.get() == conditions[6]:
+            str_where = where_statement(col.get(),operator_var.get(),[between_entry_1.get(),between_entry_2.get()])
+        elif operator_var.get() == conditions[7]:
+            value_list = list()
+            for i in entry_list:
+                value_list.append(i.get())
+            str_where = where_statement(col.get(),operator_var.get(),value_list)
+        elif operator_var.get() == conditions[8]:
+            str_where = where_statement(col.get(),operator_var.get(),like_entry.get())
+        else:
+            str_where = where_statement(col.get(),operator_var.get(),None)
+        cur1.execute(str_exec+str_where)
+        deleted_rows = cur1.fetchall()
+        for i in range(len(deleted_rows)):
+            if i%2 == 0:
+                delete_treeview.insert(parent='',index=END,iid=i,text="",values=deleted_rows[i],tags=('evenrow'))
+            else:
+                delete_treeview.insert(parent='',index=END,iid=i,text="",values=deleted_rows[i],tags=('oddrow'))
+
+    check_values = Button(delete_frame,text='Check rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=show_delete_table)
+    check_values.grid(row=0,column=4)
+
+    delete_rows = Button(frame,text='Delete rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:print('y'),state=DISABLED)
+    delete_rows.pack()
+
+    def grid_frames(value):
+        if value in conditions[0:6]:
+            for frames in framelist:
+                if frames == framelist[0]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.grid_forget()
+        elif value == conditions[6]:
+            for frames in framelist:
+                if frames == framelist[1]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.grid_forget()
+        elif value == conditions[7]:
+            for frames in framelist:
+                if frames == framelist[2]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.grid_forget()
+            try:
+                for i in entry_list:
+                    i.grid_forget()
+                no_of_rows_label.grid(row=0,column=0)
+                no_of_rows_entry.grid(row=0,column=1)
+                print('a')
+            except:pass
+        elif value == conditions[8]:
+            for frames in framelist:
+                if frames == framelist[3]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.destroy()
+        else:
+            for frames in framelist:
+                frames.grid_forget()
+
     text_label =Label(delete_frame,text="Delete where")
     text_label.grid(row=0,column=0)
     col = StringVar()
     col.set(columns[0])
     col_name = OptionMenu(delete_frame,col,*columns)
     col_name.grid(row=0,column=1)
+    operator_var = StringVar()
+    operator_var.set(conditions[0])
+    condition_menu = OptionMenu(delete_frame,operator_var,*conditions,command=grid_frames)
+    condition_menu.grid(row=0,column=2)
 
 def modify_table_(frame,table):
     pass
