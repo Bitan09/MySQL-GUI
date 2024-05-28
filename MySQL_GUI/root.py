@@ -19,6 +19,134 @@ unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
 
 conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not null"]
 
+def clean_treview(treeview:ttk.Treeview):
+    for record in treeview.get_children():
+        treeview.delete(record)
+
+def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
+    try:
+        cur1.execute(f"DELETE FROM {table} {where_str}")
+        clean_treview(treeview)
+        new_frame.destroy()
+        show_table(show_values_table,table)
+    except:
+        messagebox.showerror(title="Error",message="There was an error while executing!")
+    button.config(state=DISABLED)
+
+def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
+    def show_table_required():
+        global str_where
+        clean_treview(treeview)
+        str_exec = f"select * from {table} "
+        if operator_var.get() in conditions[0:6]:
+            str_where = where_statement(col.get(),operator_var.get(),relational_entry.get())
+        elif operator_var.get() == conditions[6]:
+            str_where = where_statement(col.get(),operator_var.get(),[between_entry_1.get(),between_entry_2.get()])
+        elif operator_var.get() == conditions[7]:
+            value_list = list()
+            for i in entry_list:
+                value_list.append(i.get())
+            str_where = where_statement(col.get(),operator_var.get(),value_list)
+        elif operator_var.get() == conditions[8]:
+            str_where = where_statement(col.get(),operator_var.get(),like_entry.get())
+        else:
+            str_where = where_statement(col.get(),operator_var.get(),None)
+        cur1.execute(str_exec+str_where)
+        rows = cur1.fetchall()
+        for i in range(len(rows)):
+            if i%2 == 0:
+                treeview.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('evenrow'))
+            else:
+                treeview.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('oddrow'))
+        for i in button:
+            i.config(state=NORMAL)
+
+    def enter_entries(event=None):
+        global entry_list
+        entry_list = list()
+        try:
+            no_of_rows = int(no_of_rows_entry.get())
+            if no_of_rows <= 0:
+                messagebox.showerror(title="Enter number",message="Enter a natural number")
+            else:
+                no_of_rows_label.grid_forget()
+                no_of_rows_entry.grid_forget()
+                for i in range(no_of_rows):
+                    entrybox = Entry(in_frame,font=(None,15))
+                    entrybox.grid(row=i//3,column=i%3)
+                    entry_list.append(entrybox)
+        except ValueError: messagebox.showerror(title="Enter number",message="Enter a natural number")
+    
+    def grid_frames(value):
+        if value in conditions[0:6]:
+            for frames in framelist:
+                if frames == framelist[0]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.grid_forget()
+        elif value == conditions[6]:
+            for frames in framelist:
+                if frames == framelist[1]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.grid_forget()
+        elif value == conditions[7]:
+            for frames in framelist:
+                if frames == framelist[2]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.grid_forget()
+            try:
+                for i in entry_list:
+                    i.grid_forget()
+                no_of_rows_label.grid(row=0,column=0)
+                no_of_rows_entry.grid(row=0,column=1)
+            except:pass
+        elif value == conditions[8]:
+            for frames in framelist:
+                if frames == framelist[3]:
+                    frames.grid(row=0,column=3)
+                else:
+                    frames.destroy()
+        else:
+            for frames in framelist:
+                frames.grid_forget()
+
+    relational_frame = Frame(frame)
+    relational_frame.grid(row=0,column=3)
+    relational_entry = Entry(relational_frame,font=(None,15))
+    relational_entry.grid(row=0,column=0)
+    between_frame = Frame(frame)
+    between_entry_1 = Entry(between_frame,font=(None,15))
+    and_label = Label(between_frame,text="and",font=(None,15))
+    between_entry_2 = Entry(between_frame,font=(None,15))
+    between_entry_1.grid(row=0,column=0)
+    and_label.grid(row=0,column=1)
+    between_entry_2.grid(row=0,column=2)
+    in_frame = Frame(frame)
+    no_of_rows_label = Label(in_frame,text="Enter no.of args (Press enter after entering):")
+    no_of_rows_entry = Entry(in_frame,font=(None,15),width=3)
+    no_of_rows_entry.bind('<Return>',enter_entries)
+    no_of_rows_label.grid(row=0,column=0)
+    no_of_rows_entry.grid(row=0,column=1)
+    like_frame = Frame(frame)
+    like_entry = Entry(like_frame,font=(None,15))
+    like_entry.grid(row=0,column=0)
+    framelist = [relational_frame,between_frame,in_frame,like_frame]
+
+    text_label =Label(frame,text="Delete where")
+    text_label.grid(row=0,column=0)
+    col = StringVar()
+    col.set(columns[0])
+    col_name = OptionMenu(frame,col,*columns)
+    col_name.grid(row=0,column=1)
+    operator_var = StringVar()
+    operator_var.set(conditions[0])
+    condition_menu = OptionMenu(frame,operator_var,*conditions,command=grid_frames)
+    condition_menu.grid(row=0,column=2)
+    check_values = Button(frame,text='Check rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=show_table_required)
+    check_values.grid(row=0,column=4)
+
 def where_statement(columnname,condition,mainvalue):
     str_to_exec = f"WHERE {columnname} {condition} "
     if condition in conditions[0:6]:
@@ -162,119 +290,10 @@ def delete_values(frame,table):
     scrollbary.config(command=delete_treeview.yview)
     scrollbarx.config(command=delete_treeview.xview)
 
-    def enter_entries(event=None):
-        global entry_list
-        entry_list = list()
-        try:
-            no_of_rows = int(no_of_rows_entry.get())
-            if no_of_rows <= 0:
-                messagebox.showerror(title="Enter number",message="Enter a natural number")
-            else:
-                no_of_rows_label.grid_forget()
-                no_of_rows_entry.grid_forget()
-                for i in range(no_of_rows):
-                    entrybox = Entry(in_frame,font=(None,15))
-                    entrybox.grid(row=i//3,column=i%3)
-                    entry_list.append(entrybox)
-        except ValueError: messagebox.showerror(title="Enter number",message="Enter a natural number")
-
-    relational_frame = Frame(delete_frame)
-    relational_frame.grid(row=0,column=3)
-    relational_entry = Entry(relational_frame,font=(None,15))
-    relational_entry.grid(row=0,column=0)
-    between_frame = Frame(delete_frame)
-    between_entry_1 = Entry(between_frame,font=(None,15))
-    and_label = Label(between_frame,text="and",font=(None,15))
-    between_entry_2 = Entry(between_frame,font=(None,15))
-    between_entry_1.grid(row=0,column=0)
-    and_label.grid(row=0,column=1)
-    between_entry_2.grid(row=0,column=2)
-    in_frame = Frame(delete_frame)
-    no_of_rows_label = Label(in_frame,text="Enter no.of args (Press enter after entering):")
-    no_of_rows_entry = Entry(in_frame,font=(None,15),width=3)
-    no_of_rows_entry.bind('<Return>',enter_entries)
-    no_of_rows_label.grid(row=0,column=0)
-    no_of_rows_entry.grid(row=0,column=1)
-    like_frame = Frame(delete_frame)
-    like_entry = Entry(like_frame,font=(None,15))
-    like_entry.grid(row=0,column=0)
-    framelist = [relational_frame,between_frame,in_frame,like_frame]
-
-    def show_delete_table():
-        str_exec = f"select * from {table} "
-        if operator_var.get() in conditions[0:6]:
-            str_where = where_statement(col.get(),operator_var.get(),relational_entry.get())
-        elif operator_var.get() == conditions[6]:
-            str_where = where_statement(col.get(),operator_var.get(),[between_entry_1.get(),between_entry_2.get()])
-        elif operator_var.get() == conditions[7]:
-            value_list = list()
-            for i in entry_list:
-                value_list.append(i.get())
-            str_where = where_statement(col.get(),operator_var.get(),value_list)
-        elif operator_var.get() == conditions[8]:
-            str_where = where_statement(col.get(),operator_var.get(),like_entry.get())
-        else:
-            str_where = where_statement(col.get(),operator_var.get(),None)
-        cur1.execute(str_exec+str_where)
-        deleted_rows = cur1.fetchall()
-        for i in range(len(deleted_rows)):
-            if i%2 == 0:
-                delete_treeview.insert(parent='',index=END,iid=i,text="",values=deleted_rows[i],tags=('evenrow'))
-            else:
-                delete_treeview.insert(parent='',index=END,iid=i,text="",values=deleted_rows[i],tags=('oddrow'))
-
-    check_values = Button(delete_frame,text='Check rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=show_delete_table)
-    check_values.grid(row=0,column=4)
-
-    delete_rows = Button(frame,text='Delete rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:print('y'),state=DISABLED)
+    delete_rows = Button(frame,text='Delete rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:delete_from_table(table,str_where,delete_treeview,delete_rows),state=DISABLED)
     delete_rows.pack()
 
-    def grid_frames(value):
-        if value in conditions[0:6]:
-            for frames in framelist:
-                if frames == framelist[0]:
-                    frames.grid(row=0,column=3)
-                else:
-                    frames.grid_forget()
-        elif value == conditions[6]:
-            for frames in framelist:
-                if frames == framelist[1]:
-                    frames.grid(row=0,column=3)
-                else:
-                    frames.grid_forget()
-        elif value == conditions[7]:
-            for frames in framelist:
-                if frames == framelist[2]:
-                    frames.grid(row=0,column=3)
-                else:
-                    frames.grid_forget()
-            try:
-                for i in entry_list:
-                    i.grid_forget()
-                no_of_rows_label.grid(row=0,column=0)
-                no_of_rows_entry.grid(row=0,column=1)
-                print('a')
-            except:pass
-        elif value == conditions[8]:
-            for frames in framelist:
-                if frames == framelist[3]:
-                    frames.grid(row=0,column=3)
-                else:
-                    frames.destroy()
-        else:
-            for frames in framelist:
-                frames.grid_forget()
-
-    text_label =Label(delete_frame,text="Delete where")
-    text_label.grid(row=0,column=0)
-    col = StringVar()
-    col.set(columns[0])
-    col_name = OptionMenu(delete_frame,col,*columns)
-    col_name.grid(row=0,column=1)
-    operator_var = StringVar()
-    operator_var.set(conditions[0])
-    condition_menu = OptionMenu(delete_frame,operator_var,*conditions,command=grid_frames)
-    condition_menu.grid(row=0,column=2)
+    where_frame(delete_frame,delete_treeview,table,delete_rows)
 
 def modify_table_(frame,table):
     pass
