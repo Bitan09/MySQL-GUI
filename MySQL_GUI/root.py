@@ -301,6 +301,33 @@ def delete_values(frame:Frame,table):
     where_frame(delete_frame,delete_treeview,table,"Delete where",delete_rows)
 
 def modify_table_(frame:Frame,table):
+
+    def delete_column():
+        def delete_column_submit_command():
+            try:
+                deleted_column = delete_column_listbox.get(delete_column_listbox.curselection())
+                cur1.execute(f"ALTER TABLE {table} DROP COLUMN {deleted_column}")
+                delete_column_toplevel.destroy()
+                dml_commands_frame.destroy()
+                table_dml()
+            except TclError:messagebox.showerror(title="No selection",message="Select a value to be deleted")
+        if len(table_list) == 0:
+            messagebox.showwarning(title="No columns",message="No columns inside the selected table")
+        else:
+            delete_column_toplevel = Toplevel()
+            delete_column_selection = Frame(delete_column_toplevel,bg='#000000')
+            delete_column_label = Label(delete_column_selection,text="Select column to be deleted",font=('Calibri',30),fg='#FFFFFF',bg='#000000')
+            delete_column_submit = Button(delete_column_selection,text="Delete column",font=('calibri',20),command=delete_column_submit_command)
+            delete_column_frame = Frame(delete_column_selection,bg='#000000')
+            delete_column_listbox = Listbox(delete_column_frame,font=("calibri",20),bg="#101010",fg="#98F5F9")
+            for index in range(0,len(mod_list)):
+                delete_column_listbox.insert(index,mod_list[index][0])
+            delete_column_label.pack()
+            delete_column_listbox.pack()
+            delete_column_frame.pack()
+            delete_column_submit.pack(anchor=E)
+            delete_column_selection.pack()
+
     def modify_table_desc():
         if len(modify_treeview.selection()) == 1:
             col_name = int(modify_treeview.selection()[0])
@@ -386,7 +413,7 @@ def modify_table_(frame:Frame,table):
     add_or_delete_frame.pack()
     add_button = Button(add_or_delete_frame,text='Add column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
     spacer = Label(add_or_delete_frame,width=20,bg="#000000")
-    delete_button = Button(add_or_delete_frame,text='Delete column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+    delete_button = Button(add_or_delete_frame,text='Delete column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=delete_column)
     add_button.grid(row=0,column=0)
     spacer.grid(row=0,column=1)
     delete_button.grid(row=0,column=2)
@@ -642,7 +669,7 @@ def data_table():
                 drop_table_toplevel.destroy()
                 table_frame.destroy()
                 table_frame_update()
-            except:messagebox.showerror(title="No selection",message="Select a value to be deleted")
+            except TclError:messagebox.showerror(title="No selection",message="Select a value to be deleted")
         if len(table_list) == 0:
             messagebox.showwarning(title="No tables",message="No table inside the selected database")
         else:
