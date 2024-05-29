@@ -38,19 +38,12 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
         global str_where
         clean_treview(treeview)
         str_exec = f"select * from {table} "
-        if operator_var.get() in conditions[0:6]:
-            str_where = where_statement(col.get(),operator_var.get(),relational_entry.get())
-        elif operator_var.get() == conditions[6]:
-            str_where = where_statement(col.get(),operator_var.get(),[between_entry_1.get(),between_entry_2.get()])
-        elif operator_var.get() == conditions[7]:
-            value_list = list()
+        value_list = list()
+        try:
             for i in entry_list:
                 value_list.append(i.get())
-            str_where = where_statement(col.get(),operator_var.get(),value_list)
-        elif operator_var.get() == conditions[8]:
-            str_where = where_statement(col.get(),operator_var.get(),like_entry.get())
-        else:
-            str_where = where_statement(col.get(),operator_var.get(),None)
+        except:pass
+        str_where = where_statement(col.get(),operator_var.get(),relational_entry.get(),[between_entry_1.get(),between_entry_2.get()],value_list,like_entry.get())
         cur1.execute(str_exec+str_where)
         rows = cur1.fetchall()
         for i in range(len(rows)):
@@ -107,7 +100,7 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
                 if frames == framelist[3]:
                     frames.grid(row=0,column=3)
                 else:
-                    frames.destroy()
+                    frames.grid_forget()
         else:
             for frames in framelist:
                 frames.grid_forget()
@@ -147,22 +140,22 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
     check_values = Button(frame,text='Check rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=show_table_required)
     check_values.grid(row=0,column=4)
 
-def where_statement(columnname,condition,mainvalue):
+def where_statement(columnname,condition,*mainvalue):
     str_to_exec = f"WHERE {columnname} {condition} "
     if condition in conditions[0:6]:
-        str_to_exec += f'"{mainvalue}"'
+        str_to_exec += f'"{mainvalue[0]}"'
     elif condition == conditions[6]:
-        str_to_exec += f'"{mainvalue[0]}" and "{mainvalue[1]}"'
+        str_to_exec += f'"{mainvalue[1][0]}" and "{mainvalue[1][1]}"'
     elif condition == conditions[7]:
-        for i in range(len(mainvalue)):
-            if mainvalue [i] == mainvalue[0]:
-                str_to_exec += f'("{mainvalue[i]}",'
-            elif mainvalue [i] == mainvalue[-1]:
-                str_to_exec += f'"{mainvalue[i]}")'
+        for i in range(len(mainvalue[2])):
+            if mainvalue[2][i] == mainvalue[2][0]:
+                str_to_exec += f'("{mainvalue[2][i]}",'
+            elif mainvalue[2][i] == mainvalue[2][-1]:
+                str_to_exec += f'"{mainvalue[2][i]}")'
             else:
-                str_to_exec += f'"{mainvalue[i]}",'
+                str_to_exec += f'"{mainvalue[2][i]}",'
     elif condition == conditions[8]:
-        str_to_exec += f'"{mainvalue}"'
+        str_to_exec += f'"{mainvalue[3]}"'
     return str_to_exec
 
 def show_table(frame,tablename):
