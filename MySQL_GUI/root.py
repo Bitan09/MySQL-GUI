@@ -68,6 +68,7 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
                     entrybox = Entry(in_frame,font=(None,15))
                     entrybox.grid(row=i//3,column=i%3)
                     entry_list.append(entrybox)
+                check_values.config(state=NORMAL)
         except ValueError: messagebox.showerror(title="Enter number",message="Enter a natural number")
     
     def grid_frames(value):
@@ -77,18 +78,21 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
                     frames.grid(row=0,column=3)
                 else:
                     frames.grid_forget()
+            check_values.config(state=NORMAL)
         elif value == conditions[6]:
             for frames in framelist:
                 if frames == framelist[1]:
                     frames.grid(row=0,column=3)
                 else:
                     frames.grid_forget()
+            check_values.config(state=NORMAL)
         elif value == conditions[7]:
             for frames in framelist:
                 if frames == framelist[2]:
                     frames.grid(row=0,column=3)
                 else:
                     frames.grid_forget()
+            check_values.config(state=DISABLED)
             try:
                 for i in entry_list:
                     i.grid_forget()
@@ -101,9 +105,11 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
                     frames.grid(row=0,column=3)
                 else:
                     frames.grid_forget()
+            check_values.config(state=NORMAL)
         else:
             for frames in framelist:
                 frames.grid_forget()
+            check_values.config(state=NORMAL)
 
     relational_frame = Frame(frame)
     relational_frame.grid(row=0,column=3)
