@@ -33,7 +33,7 @@ def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
         messagebox.showerror(title="Error",message="There was an error while executing!")
     button.config(state=DISABLED)
 
-def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
+def where_frame(frame:Frame,treeview:ttk.Treeview,table,statement:str,*button:Button):
     def show_table_required():
         global str_where
         clean_treview(treeview)
@@ -133,7 +133,7 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,*button:Button):
     like_entry.grid(row=0,column=0)
     framelist = [relational_frame,between_frame,in_frame,like_frame]
 
-    text_label =Label(frame,text="Delete where")
+    text_label =Label(frame,text=statement)
     text_label.grid(row=0,column=0)
     col = StringVar()
     col.set(columns[0])
@@ -164,7 +164,7 @@ def where_statement(columnname,condition,*mainvalue):
         str_to_exec += f'"{mainvalue[3]}"'
     return str_to_exec
 
-def show_table(frame,tablename):
+def show_table(frame:Frame,tablename):
     global columns
     global new_frame
     cur1.execute(f"select * from {tablename}")
@@ -179,25 +179,28 @@ def show_table(frame,tablename):
     style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC",font=(None,15))
     style_tree.configure("Treeview.Heading",font=(None,15,"bold"))
     style_tree.map("Treeview",background=[('selected',"#01AB2C")])
-    table = ttk.Treeview(new_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
-    table['columns'] = columns
-    table.column('#0',width=0,stretch=NO)
-    table.heading('#0',text='')
+    table_treeview = ttk.Treeview(new_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
+    table_treeview['columns'] = columns
+    table_treeview.column('#0',width=0,stretch=NO)
+    table_treeview.heading('#0',text='')
     for i in range(len(columns)):
-        table.column(columns[i],anchor=W,width=250)
-        table.heading(columns[i],text=columns[i],anchor=W)
-    table.tag_configure('oddrow',background="#E6F5FE")
-    table.tag_configure('evenrow',background="#49BDFF")
+        table_treeview.column(columns[i],anchor=W,width=250)
+        table_treeview.heading(columns[i],text=columns[i],anchor=W)
+    table_treeview.tag_configure('oddrow',background="#E6F5FE")
+    table_treeview.tag_configure('evenrow',background="#49BDFF")
     for i in range(len(rows)):
         if i%2 == 0:
-            table.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('evenrow'))
+            table_treeview.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('evenrow'))
         else:
-            table.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('oddrow'))
+            table_treeview.insert(parent='',index=END,iid=i,text="",values=rows[i],tags=('oddrow'))
+    condition_frame = Frame(new_frame)
+    where_frame(condition_frame,table_treeview,tablename,"Show where")
+    condition_frame.pack()
     scrollbary.pack(side=LEFT,fill=Y)
     scrollbarx.pack(side=TOP,fill=X)
-    table.pack(side=LEFT,fill=BOTH)
-    scrollbary.config(command=table.yview)
-    scrollbarx.config(command=table.xview)
+    table_treeview.pack(side=LEFT,fill=BOTH)
+    scrollbary.config(command=table_treeview.yview)
+    scrollbarx.config(command=table_treeview.xview)
 
 def insert_into_table(table,list,entries):
     str_exec = f"INSERT INTO {table}("
@@ -222,10 +225,13 @@ def insert_into_table(table,list,entries):
         show_table(show_values_table,table)
     except:messagebox.showerror(title="Error",message="There was an error executing\nPlease try again")
 
-def insert_values(frame,tablename):
+def insert_values(frame:Frame,tablename):
     global description
+    insertion_frame = Frame(frame)
+    insertion_frame.pack()
     cur1.execute(f"desc {tablename}")
     description = cur1.fetchall()
+
     def insert_submit():
         value_list = list()
         for i in range(len(col_vals)):
@@ -243,7 +249,7 @@ def insert_values(frame,tablename):
             messagebox.showerror(title="NO values",message="Enter values to proceed")
         
     col_vals = list()
-    column_value = Frame(frame)
+    column_value = Frame(insertion_frame)
     for i in range(len(columns)):
         col_frame = Frame(column_value)
         col_label = Label(col_frame,text=f"{columns[i]}:",font=('calibri',20))
@@ -252,12 +258,12 @@ def insert_values(frame,tablename):
         col_vals.append(col_entry)
         col_entry.grid(row=0,column=1)
         Hovertip(col_entry,f"{description[i][1:4:2]}")
-        col_frame.grid(row=i//2,column=i%2,sticky=W,padx=10,pady=10)
+        col_frame.grid(row=i//3,column=i%3,sticky=W,padx=10,pady=10)
     column_value.pack(anchor=NW)
-    submit_button = Button(frame,text='Submit',command=insert_submit,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+    submit_button = Button(insertion_frame,text='Submit',command=insert_submit,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
     submit_button.pack(anchor=SW)
 
-def delete_values(frame,table):
+def delete_values(frame:Frame,table):
     def truncate_confirm():
         if messagebox.askyesno(title="confirm deletion",message="Do you want to delete all the values"):
             cur1.execute(f"truncate {table}")
@@ -292,12 +298,100 @@ def delete_values(frame,table):
     delete_rows = Button(frame,text='Delete rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:delete_from_table(table,str_where,delete_treeview,delete_rows),state=DISABLED)
     delete_rows.pack()
 
-    where_frame(delete_frame,delete_treeview,table,delete_rows)
+    where_frame(delete_frame,delete_treeview,table,"Delete where",delete_rows)
 
-def modify_table_(frame,table):
-    pass
+def modify_table_(frame:Frame,table):
+    def modify_table_desc():
+        if len(modify_treeview.selection()) == 1:
+            col_name = int(modify_treeview.selection()[0])
+            def modify_column():
+                if size_entry.get() == "":messagebox.showwarning(title="No size given",message="Enter size of the column")
+                elif (not size_entry.get().isdigit()) or (int(size_entry.get()) < 1):messagebox.showwarning(title="Wrong size given",message="Enter size of the column in natural numbers only")
+                else:
+                    str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
+                    if datatype_mod_option.get() != datatype_list[-1]:
+                        str_exec += f"({size_entry.get()})"
+                    if constraint_mod_option != constraint_list[-1]:
+                        str_exec += f" {constraint_mod_option.get()}"
+                    try:
+                        cur1.execute(str_exec)
+                        mod_column.destroy()
+                        dml_commands_frame.destroy()
+                        table_dml()
+                    except:messagebox.showerror(title="Execution error",message="There was an error while executing the command")
+            def change_state(x=None):
+                if (datatype_mod_option.get() in datatype_list) and (constraint_mod_option.get() in constraint_list):
+                    submit_button.config(state=NORMAL)
+            def size_change(x):
+                change_state()
+                if x == datatype_list[-1]:
+                    size_entry.delete(0,END)
+                    size_entry.insert(0,"1")
+                    size_entry.config(state=DISABLED)
+                else:
+                    size_entry.config(state=NORMAL)
+            mod_column = Toplevel()
+            datatype_mod_option = StringVar()
+            datatype_mod_option.set(mod_list[col_name][1])
+            constraint_mod_option = StringVar()
+            constraint_mod_option.set(mod_list[col_name][3])
+            Label(mod_column,text=mod_list[col_name][0],font=(None,15)).grid(row=0,column=0,columnspan=7)
+            Label(mod_column,text="Datatype:").grid(row=1,column=0)
+            datatype_option = OptionMenu(mod_column,datatype_mod_option,*datatype_list,command=size_change)
+            datatype_option.grid(row=1,column=1)
+            Label(mod_column,text="Size:").grid(row=1,column=2)
+            size_entry = Entry(mod_column,width=4)
+            size_entry.grid(row=1,column=3)
+            Label(mod_column,text="Constraint:").grid(row=1,column=4)
+            constraint_option = OptionMenu(mod_column,constraint_mod_option,*constraint_list,command=change_state)
+            constraint_option.grid(row=1,column=5)
+            submit_button = Button(mod_column,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',state=DISABLED,command=modify_column)
+            submit_button.grid(row=1,column=6)
+        else:messagebox.showwarning(title="More than 1 selection",message="Please select only one row")
+        
+    cur1.execute(f"desc {table}")
+    columns_mod = cur1.column_names
+    mod_list = cur1.fetchall()
+    mod_frame = Frame(frame)
+    mod_frame.pack()
+    scrollbary = ttk.Scrollbar(mod_frame,orient=VERTICAL)
+    modify_treeview = ttk.Treeview(mod_frame,yscrollcommand=scrollbary.set)
+    modify_treeview['columns'] = columns_mod
+    modify_treeview.column('#0',width=0,stretch=NO)
+    modify_treeview.heading('#0',text='')
+    for i in range(len(columns_mod)):
+        if columns_mod[i] == columns_mod[0]:
+            modify_treeview.column(columns_mod[i],anchor=W,width=250)
+        elif columns_mod[i] == columns_mod[1] or columns_mod[i] == columns_mod[-1]:
+            modify_treeview.column(columns_mod[i],anchor=W,width=200)
+        else:
+            modify_treeview.column(columns_mod[i],anchor=W,width=100)
+        modify_treeview.heading(columns_mod[i],text=columns_mod[i],anchor=W)
+    modify_treeview.tag_configure('oddrow',background="#E6F5FE")
+    modify_treeview.tag_configure('evenrow',background="#49BDFF")
+    for i in range(len(mod_list)):
+        if i%2 == 0:
+            modify_treeview.insert(parent='',index=END,iid=i,text="",values=mod_list[i],tags=('evenrow'))
+        else:
+            modify_treeview.insert(parent='',index=END,iid=i,text="",values=mod_list[i],tags=('oddrow'))
+    scrollbary.pack(side=LEFT,fill=Y)
+    modify_treeview.pack(side=LEFT,fill=BOTH)
+    scrollbary.config(command=modify_treeview.yview)
 
-def update_values(frame,table):
+    mod_frame_2 = Frame(frame)
+    mod_frame_2.pack()
+    mod_button = Button(mod_frame_2,text='Modify',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=modify_table_desc)
+    mod_button.grid(row=0,column=0)
+    add_or_delete_frame = Frame(frame,bg="#000000")
+    add_or_delete_frame.pack()
+    add_button = Button(add_or_delete_frame,text='Add column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+    spacer = Label(add_or_delete_frame,width=20,bg="#000000")
+    delete_button = Button(add_or_delete_frame,text='Delete column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
+    add_button.grid(row=0,column=0)
+    spacer.grid(row=0,column=1)
+    delete_button.grid(row=0,column=2)
+
+def update_values(frame:Frame,table):
     pass
 
 def table_creation(tablename,tablelist):
@@ -307,8 +401,7 @@ def table_creation(tablename,tablelist):
         if column[1] != datatype_list[-1]:
             command_exec += f"({column[2]})"
         if column[3] != constraint_list[-1]:
-            command_exec += " "
-            command_exec += f"{column[3]}"
+            command_exec += f" {column[3]}"
         if column != tablelist[-1]:
             command_exec += ", "
         else:
@@ -430,7 +523,7 @@ def data_table():
                                 index[i+1].config(state=DISABLED)
                             else:
                                 index[i+1].config(state=NORMAL)
-                        if i ==2:
+                        if i == 2:
                             if (not index[i].get().isdigit()) and (int(index[i].get()) < 0):
                                 messagebox.showwarning(title="Error",message="Only natural numbers are allowed in size")
                                 check_bool = False
@@ -569,6 +662,7 @@ def data_table():
     def select_table():
         table_selection.destroy()
         table_dml()
+        
     def table_frame_update():
         global table_list
         global table_frame
