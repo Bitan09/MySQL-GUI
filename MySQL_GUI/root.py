@@ -302,6 +302,50 @@ def delete_values(frame:Frame,table):
 
 def modify_table_(frame:Frame,table):
 
+    def add_column():
+        def add_new_column():
+            if size_entry.get() == "":messagebox.showwarning(title="No size given",message="Enter size of the column")
+            elif (not size_entry.get().isdigit()) or (int(size_entry.get()) < 1):messagebox.showwarning(title="Wrong size given",message="Enter size of the column in natural numbers only")
+            else:
+                str_exec = f"ALTER TABLE {table} ADD COLUMN {add_column_entry.get()} {datatype_add_option.get()}"
+                if datatype_add_option.get() != datatype_list[-1]:
+                    str_exec += f"({size_entry.get()})"
+                if constraint_add_option != constraint_list[-1]:
+                    str_exec += f" {constraint_add_option.get()}"
+                try:
+                    cur1.execute(str_exec)
+                    add_column.destroy()
+                    dml_commands_frame.destroy()
+                    table_dml()
+                except:messagebox.showerror(title="Execution error",message="There was an error while executing the command")
+        def size_change(x):
+            if x == datatype_list[-1]:
+                size_entry.delete(0,END)
+                size_entry.insert(0,"1")
+            else:
+                size_entry.config(state=NORMAL)
+        add_column = Toplevel()
+        datatype_add_option = StringVar()
+        datatype_add_option.set(datatype_list[0])
+        constraint_add_option = StringVar()
+        constraint_add_option.set(constraint_list[0])
+        column_name_frame = Frame(add_column)
+        column_name_frame.grid(row=0,column=0,columnspan=7)
+        Label(column_name_frame,text="Name of column",font=(None,15)).grid(row=0,column=0)
+        add_column_entry = Entry(column_name_frame,font=(None,15))
+        add_column_entry.grid(row=0,column=1)
+        Label(add_column,text="Datatype:").grid(row=1,column=0)
+        datatype_option = OptionMenu(add_column,datatype_add_option,*datatype_list,command=size_change)
+        datatype_option.grid(row=1,column=1)
+        Label(add_column,text="Size:").grid(row=1,column=2)
+        size_entry = Entry(add_column,width=4)
+        size_entry.grid(row=1,column=3)
+        Label(add_column,text="Constraint:").grid(row=1,column=4)
+        constraint_option = OptionMenu(add_column,constraint_add_option,*constraint_list)
+        constraint_option.grid(row=1,column=5)
+        submit_button = Button(add_column,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=add_new_column)
+        submit_button.grid(row=1,column=6)
+
     def delete_column():
         def delete_column_submit_command():
             try:
@@ -328,14 +372,25 @@ def modify_table_(frame:Frame,table):
             delete_column_submit.pack(anchor=E)
             delete_column_selection.pack()
 
-    def modify_table_desc():
+    def modify_table_desc(change:bool=False):
         if len(modify_treeview.selection()) == 1:
             col_name = int(modify_treeview.selection()[0])
             def modify_column():
+                if not change:
+                    x = False
+                else:
+                    x = True
+                if change_name_entry.get() == "":
+                    y = False
+                else:
+                    y = True
+
                 if size_entry.get() == "":messagebox.showwarning(title="No size given",message="Enter size of the column")
                 elif (not size_entry.get().isdigit()) or (int(size_entry.get()) < 1):messagebox.showwarning(title="Wrong size given",message="Enter size of the column in natural numbers only")
+                elif (x or y) and not(x and y):messagebox.showwarning(title="No new name given",message="Enter new name of the column")
                 else:
-                    str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
+                    if change:str_exec = f"ALTER TABLE {table} CHANGE {mod_list[col_name][0]} {change_name_entry.get()} {datatype_mod_option.get()}"
+                    else:str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
                     if datatype_mod_option.get() != datatype_list[-1]:
                         str_exec += f"({size_entry.get()})"
                     if constraint_mod_option != constraint_list[-1]:
@@ -374,6 +429,12 @@ def modify_table_(frame:Frame,table):
             constraint_option.grid(row=1,column=5)
             submit_button = Button(mod_column,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',state=DISABLED,command=modify_column)
             submit_button.grid(row=1,column=6)
+            change_frame = Frame(mod_column)
+            Label(change_frame,text="New name:",font=(None,15)).grid(row=0,column=0)
+            change_name_entry = Entry(change_frame,font=(None,15))
+            change_name_entry.grid(row=0,column=1)
+            if change:
+                change_frame.grid(row=2,column=0,columnspan=7)
         else:messagebox.showwarning(title="More than 1 selection",message="Please select only one row")
         
     cur1.execute(f"desc {table}")
@@ -405,17 +466,21 @@ def modify_table_(frame:Frame,table):
     modify_treeview.pack(side=LEFT,fill=BOTH)
     scrollbary.config(command=modify_treeview.yview)
 
-    mod_frame_2 = Frame(frame)
-    mod_frame_2.pack()
+    mod_frame_2 = Frame(frame,bg="#000000")
+    mod_frame_2.pack(pady=20)
     mod_button = Button(mod_frame_2,text='Modify',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=modify_table_desc)
     mod_button.grid(row=0,column=0)
+    spacer1 = Label(mod_frame_2,width=20,bg="#000000")
+    spacer1.grid(row=0,column=1)
+    change_button = Button(mod_frame_2,text='Change',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:modify_table_desc(True))
+    change_button.grid(row=0,column=3)
     add_or_delete_frame = Frame(frame,bg="#000000")
     add_or_delete_frame.pack()
-    add_button = Button(add_or_delete_frame,text='Add column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
-    spacer = Label(add_or_delete_frame,width=20,bg="#000000")
+    add_button = Button(add_or_delete_frame,text='Add column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=add_column)
+    spacer2 = Label(add_or_delete_frame,width=20,bg="#000000")
     delete_button = Button(add_or_delete_frame,text='Delete column',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=delete_column)
     add_button.grid(row=0,column=0)
-    spacer.grid(row=0,column=1)
+    spacer2.grid(row=0,column=1)
     delete_button.grid(row=0,column=2)
 
 def update_values(frame:Frame,table):
