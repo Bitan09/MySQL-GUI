@@ -33,6 +33,17 @@ def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
         messagebox.showerror(title="Error",message="There was an error while executing!")
     button.config(state=DISABLED)
 
+def update_from_table(table,set_value_entry:Entry,column_name:StringVar,where_str,treeview:ttk.Treeview,button:Button):
+    try:
+        #cur1.execute
+        print(f"UPDATE {table} SET {column_name.get()}='{set_value_entry.get()}' {where_str}")
+        clean_treview(treeview)
+        new_frame.destroy()
+        show_table(show_values_table,table)
+    except:
+        messagebox.showerror(title="Error",message="There was an error while executing!")
+    button.config(state=DISABLED)
+
 def where_frame(frame:Frame,treeview:ttk.Treeview,table,statement:str,*button:Button):
     def show_table_required():
         global str_where
@@ -133,7 +144,7 @@ def where_frame(frame:Frame,treeview:ttk.Treeview,table,statement:str,*button:Bu
     like_entry.grid(row=0,column=0)
     framelist = [relational_frame,between_frame,in_frame,like_frame]
 
-    text_label =Label(frame,text=statement)
+    text_label = Label(frame,text=statement)
     text_label.grid(row=0,column=0)
     col = StringVar()
     col.set(columns[0])
@@ -486,7 +497,43 @@ def modify_table_(frame:Frame,table):
     delete_button.grid(row=0,column=2)
 
 def update_values(frame:Frame,table):
-    pass
+    update_frame = Frame(frame)
+    update_frame.pack()
+    update_values_frame = Frame(frame)
+    update_values_frame.pack()
+    scrollbary = ttk.Scrollbar(update_values_frame,orient=VERTICAL)
+    scrollbarx = ttk.Scrollbar(update_values_frame,orient=HORIZONTAL)
+    update_treeview = ttk.Treeview(update_values_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
+    update_treeview['columns'] = columns
+    update_treeview.column('#0',width=0,stretch=NO)
+    update_treeview.heading('#0',text='')
+    for i in range(len(columns)):
+        update_treeview.column(columns[i],anchor=W,width=250)
+        update_treeview.heading(columns[i],text=columns[i],anchor=W)
+    update_treeview.tag_configure('oddrow',background="#E6F5FE")
+    update_treeview.tag_configure('evenrow',background="#49BDFF")
+    scrollbary.pack(side=LEFT,fill=Y)
+    scrollbarx.pack(side=TOP,fill=X)
+    update_treeview.pack(side=LEFT,fill=BOTH)
+    scrollbary.config(command=update_treeview.yview)
+    scrollbarx.config(command=update_treeview.xview)
+
+    update_value_set_frame = Frame(frame)
+    update_value_set_frame.pack()
+    col_update = StringVar()
+    col_update.set(columns[0])
+    set_label = Label(update_value_set_frame,text="Set",font=(None,15))
+    set_label.grid(row=0,column=0)
+    col_name = OptionMenu(update_value_set_frame,col_update,*columns)
+    col_name.grid(row=0,column=1)
+    equal_label = Label(update_value_set_frame,text="=",font=(None,15))
+    equal_label.grid(row=0,column=2)
+    value_entry = Entry(update_value_set_frame,font=(None,15))
+    value_entry.grid(row=0,column=3)
+    update_rows = Button(update_value_set_frame,text='Update rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:update_from_table(table,value_entry,col_update,str_where,update_treeview,update_rows),state=DISABLED)
+    update_rows.grid(row=0,column=4)
+
+    where_frame(update_frame,update_treeview,table,"Update where",update_rows)
 
 def table_creation(tablename,tablelist):
     command_exec = f"CREATE TABLE {tablename}("
