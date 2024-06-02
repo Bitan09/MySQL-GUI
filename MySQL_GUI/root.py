@@ -389,7 +389,9 @@ def modify_table_(frame:Frame,table):
                 elif (not size_entry.get().isdigit()) or (int(size_entry.get()) < 1):messagebox.showwarning(title="Wrong size given",message="Enter size of the column in natural numbers only")
                 elif (x or y) and not(x and y):messagebox.showwarning(title="No new name given",message="Enter new name of the column")
                 else:
-                    if change:str_exec = f"ALTER TABLE {table} CHANGE {mod_list[col_name][0]} {change_name_entry.get()} {datatype_mod_option.get()}"
+                    if change:
+                        if checking(change_name_entry.get):
+                            str_exec = f"ALTER TABLE {table} CHANGE {mod_list[col_name][0]} {change_name_entry.get()} {datatype_mod_option.get()}"
                     else:str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
                     if datatype_mod_option.get() != datatype_list[-1]:
                         str_exec += f"({size_entry.get()})"
