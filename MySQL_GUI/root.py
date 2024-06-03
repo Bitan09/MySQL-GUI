@@ -35,8 +35,7 @@ def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
 
 def update_from_table(table,set_value_entry:Entry,column_name:StringVar,where_str,treeview:ttk.Treeview,button:Button):
     try:
-        #cur1.execute
-        print(f"UPDATE {table} SET {column_name.get()}='{set_value_entry.get()}' {where_str}")
+        cur1.execute(f"UPDATE {table} SET {column_name.get()} = '{set_value_entry.get()}' {where_str}")
         clean_treview(treeview)
         new_frame.destroy()
         show_table(show_values_table,table)
