@@ -880,7 +880,7 @@ def database_window():
         database_frame.grid(row=1,column=0,columnspan=2)
         for index in range(0,len(databases_list)):
             new_row = index//5
-            database_radio = Radiobutton(database_frame,variable=database_int,text=databases_list[index][0],value=index,font=('Impact',20),indicatoron=0,width=20,command=database_submit)
+            database_radio = Radiobutton(database_frame,variable=database_int,text=databases_list[index][0],value=index,font=(None,20),indicatoron=0,width=20,command=database_submit)
             database_radio.grid(row=(new_row),column=(index%5))
             Hovertip(database_radio,f'{databases_list[index][0]}')
     def add_new_database(event=None):
