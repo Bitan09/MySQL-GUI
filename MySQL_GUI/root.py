@@ -11,9 +11,9 @@ window.resizable(False,False)
 
 passeye_bool = False
 
-constraint_list = ["Not Null","Primary Key","Unique","No constraint"]
+constraint_list = ["Not Null","Primary Key","Unique","Default","No constraint"]
 
-datatype_list = ["Char","Varchar","Int","Date"]
+datatype_list = ["Char","Varchar","Binary","Varbinary","Text","Blob","Int","Bit","Tinyint","Smallint","Mediumint","Bigint","Date","Datetime","Timestamp","Time","Year"]
 
 unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
 
@@ -29,8 +29,7 @@ def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
         clean_treview(treeview)
         new_frame.destroy()
         show_table(show_values_table,table)
-    except:
-        messagebox.showerror(title="Error",message="There was an error while executing!")
+    except Exception as e:messagebox.showerror(title="Error",message=e)
     button.config(state=DISABLED)
 
 def update_from_table(table,set_value_entry:Entry,column_name:StringVar,where_str,treeview:ttk.Treeview,button:Button):
@@ -39,8 +38,7 @@ def update_from_table(table,set_value_entry:Entry,column_name:StringVar,where_st
         clean_treview(treeview)
         new_frame.destroy()
         show_table(show_values_table,table)
-    except:
-        messagebox.showerror(title="Error",message="There was an error while executing!")
+    except Exception as e:messagebox.showerror(title="Error",message=e)
     button.config(state=DISABLED)
 
 def where_frame(frame:Frame,treeview:ttk.Treeview,table,statement:str,*button:Button):
@@ -233,7 +231,7 @@ def insert_into_table(table,list,entries):
             i.delete(0,END)
         new_frame.destroy()
         show_table(show_values_table,table)
-    except:messagebox.showerror(title="Error",message="There was an error executing\nPlease try again")
+    except Exception as e:messagebox.showerror(title="Error",message=e)
 
 def insert_values(frame:Frame,tablename):
     global description
@@ -318,22 +316,30 @@ def modify_table_(frame:Frame,table):
             elif (not size_entry.get().isdigit()) or (int(size_entry.get()) < 1):messagebox.showwarning(title="Wrong size given",message="Enter size of the column in natural numbers only")
             else:
                 str_exec = f"ALTER TABLE {table} ADD COLUMN {add_column_entry.get()} {datatype_add_option.get()}"
-                if datatype_add_option.get() != datatype_list[-1]:
+                if datatype_add_option.get() != datatype_list[-1:-6:-1]:
                     str_exec += f"({size_entry.get()})"
                 if constraint_add_option != constraint_list[-1]:
                     str_exec += f" {constraint_add_option.get()}"
+                elif constraint_add_option == constraint_list[-2]:
+                    str_exec += f" {constraint_add_option.get()} '{constraint_entry.get()}'"
                 try:
                     cur1.execute(str_exec)
                     add_column.destroy()
                     dml_commands_frame.destroy()
                     table_dml()
-                except:messagebox.showerror(title="Execution error",message="There was an error while executing the command")
+                except Exception as e:messagebox.showerror(title="Execution error",message=e)
         def size_change(x):
-            if x == datatype_list[-1]:
+            if x == datatype_list[-1:-6:-1]:
                 size_entry.delete(0,END)
                 size_entry.insert(0,"1")
             else:
                 size_entry.config(state=NORMAL)
+        def constraint_command(x):
+            if x == constraint_list[-2]:
+                constraint_entry.config(state=NORMAL)
+            else:
+                size_entry.delete(0,END)
+                constraint_entry.config(state=DISABLED)
         add_column = Toplevel()
         datatype_add_option = StringVar()
         datatype_add_option.set(datatype_list[0])
@@ -351,10 +357,12 @@ def modify_table_(frame:Frame,table):
         size_entry = Entry(add_column,width=4)
         size_entry.grid(row=1,column=3)
         Label(add_column,text="Constraint:").grid(row=1,column=4)
-        constraint_option = OptionMenu(add_column,constraint_add_option,*constraint_list)
+        constraint_option = OptionMenu(add_column,constraint_add_option,*constraint_list,command=constraint_command)
         constraint_option.grid(row=1,column=5)
+        constraint_entry = Entry(add_column,state=DISABLED)
+        constraint_entry.grid(row=1,column=6)
         submit_button = Button(add_column,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=add_new_column)
-        submit_button.grid(row=1,column=6)
+        submit_button.grid(row=1,column=7)
 
     def delete_column():
         def delete_column_submit_command():
@@ -403,22 +411,30 @@ def modify_table_(frame:Frame,table):
                         if checking(change_name_entry.get):
                             str_exec = f"ALTER TABLE {table} CHANGE {mod_list[col_name][0]} {change_name_entry.get()} {datatype_mod_option.get()}"
                     else:str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
-                    if datatype_mod_option.get() != datatype_list[-1]:
+                    if datatype_mod_option.get() != datatype_list[-1:-6:-1]:
                         str_exec += f"({size_entry.get()})"
                     if constraint_mod_option != constraint_list[-1]:
                         str_exec += f" {constraint_mod_option.get()}"
+                    elif constraint_mod_option == constraint_list[-2]:
+                        str_exec += f" {constraint_mod_option.get()} '{constraint_entry.get}'"
                     try:
                         cur1.execute(str_exec)
                         mod_column.destroy()
                         dml_commands_frame.destroy()
                         table_dml()
-                    except:messagebox.showerror(title="Execution error",message="There was an error while executing the command")
+                    except Exception as e:messagebox.showerror(title="Execution error",message=e)
             def change_state(x=None):
                 if (datatype_mod_option.get() in datatype_list) and (constraint_mod_option.get() in constraint_list):
                     submit_button.config(state=NORMAL)
+                if x != None:
+                    if x == constraint_list[-2]:
+                        constraint_entry.config(state=NORMAL)
+                    else:
+                        size_entry.delete(0,END)
+                        constraint_entry.config(state=DISABLED)
             def size_change(x):
                 change_state()
-                if x == datatype_list[-1]:
+                if x == datatype_list[-1:-6:-1]:
                     size_entry.delete(0,END)
                     size_entry.insert(0,"1")
                     size_entry.config(state=DISABLED)
@@ -439,8 +455,10 @@ def modify_table_(frame:Frame,table):
             Label(mod_column,text="Constraint:").grid(row=1,column=4)
             constraint_option = OptionMenu(mod_column,constraint_mod_option,*constraint_list,command=change_state)
             constraint_option.grid(row=1,column=5)
+            constraint_entry = Entry(mod_column)
+            constraint_entry.grid(row=1,column=6)
             submit_button = Button(mod_column,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',state=DISABLED,command=modify_column)
-            submit_button.grid(row=1,column=6)
+            submit_button.grid(row=1,column=7)
             change_frame = Frame(mod_column)
             Label(change_frame,text="New name:",font=(None,15)).grid(row=0,column=0)
             change_name_entry = Entry(change_frame,font=(None,15))
@@ -538,9 +556,11 @@ def table_creation(tablename,tablelist):
     command_exec = f"CREATE TABLE {tablename}("
     for column in tablelist:
         command_exec += f"{column[0]} {column[1]}"
-        if column[1] != datatype_list[-1]:
+        if column[1] != datatype_list[-1:-6:-1]:
             command_exec += f"({column[2]})"
-        if column[3] != constraint_list[-1]:
+        if column[3] == constraint_list[-2]:
+            command_exec += f" {column[3]} '{column[4]}'"
+        elif column[3] != constraint_list[-1]:
             command_exec += f" {column[3]}"
         if column != tablelist[-1]:
             command_exec += ", "
@@ -657,7 +677,7 @@ def data_table():
                         if i == 0:
                             check_bool = checking(index[i])
                         if i == 1:
-                            if index[i].get() == datatype_list[-1]:
+                            if index[i].get() == datatype_list[-1:-6:-1]:
                                 index[i+1].delete(0,END)
                                 index[i+1].insert(0,"1")
                                 index[i+1].config(state=DISABLED)
@@ -668,6 +688,13 @@ def data_table():
                                 messagebox.showwarning(title="Error",message="Only natural numbers are allowed in size")
                                 check_bool = False
                                 break
+                        if i == 3:
+                            if index[i].get() == constraint_list[-2]:
+                                index[i+1].config(state=NORMAL)
+                            else:
+                                index[i+1].delete(0,END)
+                                index[i+1].insert(0,"0")
+                                index[i+1].config(state=DISABLED)
                     if not check_bool:
                         break
                 if check_bool:
@@ -701,12 +728,15 @@ def data_table():
                     if not confirm_bool:
                         break
                     col_main_list.append(col_parameters)
+                    print(col_parameters)
                 if confirm_bool:
                     add_table_toplevel.destroy()
                     str_execute = table_creation(table_to_add,col_main_list)
-                    cur1.execute(str_execute)
-                    table_frame.destroy()
-                    table_frame_update()
+                    try:
+                        cur1.execute(str_execute)
+                        table_frame.destroy()
+                        table_frame_update()
+                    except Exception as e:messagebox.showerror(title="Error",message=e)
                 else:
                     del col_main_list
             if number_entry.get().isdigit() and (int(number_entry.get()) > 0):
@@ -731,16 +761,21 @@ def data_table():
                     column_datatype = OptionMenu(column_val,datatype_var,*datatype_list)
                     column_size = Entry(column_val,width=4)
                     column_constraint = OptionMenu(column_val,constraints_var,*constraint_list)
+                    column_constraint_value = Entry(column_val)
+                    column_constraint_value.insert(0,"0")
+                    column_constraint_value.config(state=DISABLED)
                     column_lab.grid(row=0,column=0)
                     column_entry.grid(row=0,column=1)
                     column_datatype.grid(row=0,column=2)
                     column_size.grid(row=0,column=3)
                     column_constraint.grid(row=0,column=4)
+                    column_constraint_value.grid(row=0,column=5)
                     column_val.grid(row=new_row,column=((index)%2))
                     col_vals.append(column_entry)
                     col_vals.append(datatype_var)
                     col_vals.append(column_size)
                     col_vals.append(constraints_var)
+                    col_vals.append(column_constraint_value)
                     col_value_list.append(col_vals)
             else: messagebox.showerror(title='Wrong value',message='Enter a natural number!')
         def submit_table_name(event=None):
@@ -811,7 +846,7 @@ def data_table():
         table_list = cur1.fetchall()
         for index in range(0,len(table_list)):
             new_row = index//5
-            table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=('Impact',20),indicatoron=0,width=20,command=select_table)
+            table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=(None,20),indicatoron=0,width=20,command=select_table)
             table_radio.grid(row=(new_row),column=(index%5),sticky=W)
             Hovertip(table_radio,f'{table_list[index][0]}')
         table_frame.pack()
