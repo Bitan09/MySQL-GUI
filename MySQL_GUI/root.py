@@ -318,7 +318,7 @@ def modify_table_(frame:Frame,table):
             elif (not size_entry.get().isdigit()) or (int(size_entry.get()) < 1):messagebox.showwarning(title="Wrong size given",message="Enter size of the column in natural numbers only")
             else:
                 str_exec = f"ALTER TABLE {table} ADD COLUMN {add_column_entry.get()} {datatype_add_option.get()}"
-                if datatype_add_option.get() != datatype_list[-1:-6:-1]:
+                if datatype_add_option.get() not in datatype_list[-1:-6:-1]:
                     str_exec += f"({size_entry.get()})"
                 if constraint_add_option.get() == constraint_list[-2]:
                     str_exec += f" {constraint_add_option.get()} '{constraint_entry.get()}'"
@@ -331,7 +331,7 @@ def modify_table_(frame:Frame,table):
                     table_dml()
                 except Exception as e:messagebox.showerror(title="Execution error",message=e)
         def size_change(x):
-            if x == datatype_list[-1:-6:-1]:
+            if x in datatype_list[-1:-6:-1]:
                 size_entry.delete(0,END)
                 size_entry.insert(0,"1")
             else:
@@ -413,7 +413,7 @@ def modify_table_(frame:Frame,table):
                         if checking(change_name_entry.get):
                             str_exec = f"ALTER TABLE {table} CHANGE {mod_list[col_name][0]} {change_name_entry.get()} {datatype_mod_option.get()}"
                     else:str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
-                    if datatype_mod_option.get() != datatype_list[-1:-6:-1]:
+                    if datatype_mod_option.get() not in datatype_list[-1:-6:-1]:
                         str_exec += f"({size_entry.get()})"
                     if constraint_mod_option != constraint_list[-1]:
                         str_exec += f" {constraint_mod_option.get()}"
@@ -436,7 +436,7 @@ def modify_table_(frame:Frame,table):
                         constraint_entry.config(state=DISABLED)
             def size_change(x):
                 change_state()
-                if x == datatype_list[-1:-6:-1]:
+                if x in datatype_list[-1:-6:-1]:
                     size_entry.delete(0,END)
                     size_entry.insert(0,"1")
                     size_entry.config(state=DISABLED)
@@ -558,7 +558,7 @@ def table_creation(tablename,tablelist):
     command_exec = f"CREATE TABLE {tablename}("
     for column in tablelist:
         command_exec += f"{column[0]} {column[1]}"
-        if column[1] != datatype_list[-1:-6:-1]:
+        if column[1] not in  datatype_list[-1:-6:-1]:
             command_exec += f"({column[2]})"
         if column[3] == constraint_list[-2]:
             command_exec += f" {column[3]} '{column[4]}'"
@@ -679,7 +679,8 @@ def data_table():
                         if i == 0:
                             check_bool = checking(index[i])
                         if i == 1:
-                            if index[i].get() == datatype_list[-1:-6:-1]:
+                            if index[i].get() in datatype_list[-1:-6:-1]:
+                                print("x")
                                 index[i+1].delete(0,END)
                                 index[i+1].insert(0,"1")
                                 index[i+1].config(state=DISABLED)
