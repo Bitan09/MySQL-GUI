@@ -19,6 +19,8 @@ unallowed_keywords = [",",".","[","]","(",")","/","\\",";",":","'",'"']
 
 conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not null"]
 
+colsize = 4
+
 def clean_treview(treeview:ttk.Treeview):
     for record in treeview.get_children():
         treeview.delete(record)
@@ -260,9 +262,9 @@ def insert_values(frame:Frame,tablename):
     column_value = Frame(insertion_frame)
     for i in range(len(columns)):
         col_frame = Frame(column_value)
-        col_label = Label(col_frame,text=f"{columns[i]}:",font=('calibri',20))
+        col_label = Label(col_frame,text=f"{columns[i]}:",font=(None,20))
         col_label.grid(row=0,column=0)
-        col_entry = Entry(col_frame,font=('calibri',15))
+        col_entry = Entry(col_frame,font=(None,15))
         col_vals.append(col_entry)
         col_entry.grid(row=0,column=1)
         Hovertip(col_entry,f"{description[i][1:4:2]}")
@@ -318,10 +320,10 @@ def modify_table_(frame:Frame,table):
                 str_exec = f"ALTER TABLE {table} ADD COLUMN {add_column_entry.get()} {datatype_add_option.get()}"
                 if datatype_add_option.get() != datatype_list[-1:-6:-1]:
                     str_exec += f"({size_entry.get()})"
-                if constraint_add_option != constraint_list[-1]:
-                    str_exec += f" {constraint_add_option.get()}"
-                elif constraint_add_option == constraint_list[-2]:
+                if constraint_add_option.get() == constraint_list[-2]:
                     str_exec += f" {constraint_add_option.get()} '{constraint_entry.get()}'"
+                elif constraint_add_option.get() != constraint_list[-1]:
+                    str_exec += f" {constraint_add_option.get()}"
                 try:
                     cur1.execute(str_exec)
                     add_column.destroy()
@@ -378,10 +380,10 @@ def modify_table_(frame:Frame,table):
         else:
             delete_column_toplevel = Toplevel()
             delete_column_selection = Frame(delete_column_toplevel,bg='#000000')
-            delete_column_label = Label(delete_column_selection,text="Select column to be deleted",font=('Calibri',30),fg='#FFFFFF',bg='#000000')
-            delete_column_submit = Button(delete_column_selection,text="Delete column",font=('calibri',20),command=delete_column_submit_command)
+            delete_column_label = Label(delete_column_selection,text="Select column to be deleted",font=(None,30),fg='#FFFFFF',bg='#000000')
+            delete_column_submit = Button(delete_column_selection,text="Delete column",font=(None,20),command=delete_column_submit_command)
             delete_column_frame = Frame(delete_column_selection,bg='#000000')
-            delete_column_listbox = Listbox(delete_column_frame,font=("calibri",20),bg="#101010",fg="#98F5F9")
+            delete_column_listbox = Listbox(delete_column_frame,font=(None,20),bg="#101010",fg="#98F5F9")
             for index in range(0,len(mod_list)):
                 delete_column_listbox.insert(index,mod_list[index][0])
             delete_column_label.pack()
@@ -641,10 +643,10 @@ def table_dml():
     dml_commands_frame.pack(fill=BOTH)
     back_button = Button(dml_commands_frame,image=back_image,bg='#0d0d0d',activebackground='#0d0d0d',command=table_window_back)
     back_button.pack(anchor=NW)
-    dml_label = Label(dml_commands_frame,text=tablename,padx=20,pady=10,font=('Calibri',35,'bold'),bg='#000000',fg='#FFFFFF',relief=RAISED)
+    dml_label = Label(dml_commands_frame,text=tablename,padx=20,pady=10,font=(None,35,'bold'),bg='#000000',fg='#FFFFFF',relief=RAISED)
     dml_label.pack(anchor=N)
     style_notebook = ttk.Style()
-    style_notebook.configure('TNotebook.Tab', font=('URW Gothic L','18','bold'))
+    style_notebook.configure('TNotebook.Tab', font=(None,'18','bold'))
     table_commands = ttk.Notebook(dml_commands_frame,height=700)
     show_values_table = Frame(table_commands,bg="#000000")
     insert_in_table = Frame(table_commands,bg="#000000")
@@ -728,7 +730,6 @@ def data_table():
                     if not confirm_bool:
                         break
                     col_main_list.append(col_parameters)
-                    print(col_parameters)
                 if confirm_bool:
                     add_table_toplevel.destroy()
                     str_execute = table_creation(table_to_add,col_main_list)
@@ -823,10 +824,10 @@ def data_table():
         else:
             drop_table_toplevel = Toplevel()
             drop_table_selection = Frame(drop_table_toplevel,bg='#000000')
-            drop_table_label = Label(drop_table_selection,text="Select table to be deleted",font=('Calibri',30),fg='#FFFFFF',bg='#000000')
-            drop_table_submit = Button(drop_table_selection,text="Delete table",font=('calibri',20),command=drop_table_submit_command)
+            drop_table_label = Label(drop_table_selection,text="Select table to be deleted",font=(None,30),fg='#FFFFFF',bg='#000000')
+            drop_table_submit = Button(drop_table_selection,text="Delete table",font=(None,20),command=drop_table_submit_command)
             drop_table_frame = Frame(drop_table_selection,bg='#000000')
-            drop_listbox = Listbox(drop_table_frame,font=("calibri",20),bg="#101010",fg="#98F5F9")
+            drop_listbox = Listbox(drop_table_frame,font=(None,20),bg="#101010",fg="#98F5F9")
             for index in range(0,len(table_list)):
                 drop_listbox.insert(index,table_list[index][0])
             drop_table_label.pack()
@@ -845,9 +846,9 @@ def data_table():
         cur1.execute("show tables")
         table_list = cur1.fetchall()
         for index in range(0,len(table_list)):
-            new_row = index//5
+            new_row = index//colsize
             table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=(None,20),indicatoron=0,width=20,command=select_table)
-            table_radio.grid(row=(new_row),column=(index%5),sticky=W)
+            table_radio.grid(row=(new_row),column=(index%colsize),sticky=W)
             Hovertip(table_radio,f'{table_list[index][0]}')
         table_frame.pack()
 
@@ -857,13 +858,13 @@ def data_table():
     table_selection = Frame(window,bg='#000000')
     table_selection.pack()
     add_and_drop = Frame(table_selection,bg='#000000')
-    add_table = Button(add_and_drop,text="Add a table",font=('calibri',20),command=table_add_command)
-    drop_table = Button(add_and_drop,text="Delete a table",font=('calibri',20),command=table_drop_command)
+    add_table = Button(add_and_drop,text="Add a table",font=(None,20),command=table_add_command)
+    drop_table = Button(add_and_drop,text="Delete a table",font=(None,20),command=table_drop_command)
     spacer1 = Label(add_and_drop,text="",padx=100,bg='#000000')
     spacer2 = Label(add_and_drop,text="",pady=10,bg='#000000')
     back_button = Button(table_selection,image=back_image,bg='#0d0d0d',command=database_window_back,activebackground='#0d0d0d')
     back_button.grid(row=0,column=0)
-    table_select_label = Label(table_selection,text="Select a table",font=('Calibri',30),fg='#FFFFFF',bg='#000000')
+    table_select_label = Label(table_selection,text="Select a table",font=(None,30),fg='#FFFFFF',bg='#000000')
     table_select_label.grid(row=0,column=1)
     show_tables = Frame(table_selection,bg='#000000')
     add_table.grid(row=0,column=0)
@@ -914,9 +915,9 @@ def database_window():
         database_frame = Frame(window,pady=10,bg='#000000')
         database_frame.grid(row=1,column=0,columnspan=2)
         for index in range(0,len(databases_list)):
-            new_row = index//5
+            new_row = index//colsize
             database_radio = Radiobutton(database_frame,variable=database_int,text=databases_list[index][0],value=index,font=(None,20),indicatoron=0,width=20,command=database_submit)
-            database_radio.grid(row=(new_row),column=(index%5))
+            database_radio.grid(row=(new_row),column=(index%colsize))
             Hovertip(database_radio,f'{databases_list[index][0]}')
     def add_new_database(event=None):
         new_database = new_database_entry.get()
