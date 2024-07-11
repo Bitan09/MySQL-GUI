@@ -410,16 +410,17 @@ def modify_table_(frame:Frame,table):
                 elif (x or y) and not(x and y):messagebox.showwarning(title="No new name given",message="Enter new name of the column")
                 else:
                     if change:
-                        if checking(change_name_entry.get):
+                        if checking(change_name_entry):
                             str_exec = f"ALTER TABLE {table} CHANGE {mod_list[col_name][0]} {change_name_entry.get()} {datatype_mod_option.get()}"
                     else:str_exec = f"ALTER TABLE {table} MODIFY {mod_list[col_name][0]} {datatype_mod_option.get()}"
                     if datatype_mod_option.get() not in datatype_list[-1:-6:-1]:
                         str_exec += f"({size_entry.get()})"
-                    if constraint_mod_option != constraint_list[-1]:
+                    if constraint_mod_option.get() != constraint_list[-1]:
                         str_exec += f" {constraint_mod_option.get()}"
-                    elif constraint_mod_option == constraint_list[-2]:
-                        str_exec += f" {constraint_mod_option.get()} '{constraint_entry.get}'"
+                    elif constraint_mod_option.get() == constraint_list[-2]:
+                        str_exec += f" {constraint_mod_option.get()} '{constraint_entry.get()}'"
                     try:
+                        print(str_exec)
                         cur1.execute(str_exec)
                         mod_column.destroy()
                         dml_commands_frame.destroy()
@@ -968,7 +969,7 @@ def password_submit(event=None):
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
     try:
-        con1 = sql.connect(host=hostname,user=username,passwd=passwd_value)
+        con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8")
         window.geometry('1420x780')
         window.resizable(True,True)
         pass_frame.destroy()
