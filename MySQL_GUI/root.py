@@ -320,10 +320,10 @@ def modify_table_(frame:Frame,table):
                 str_exec = f"ALTER TABLE {table} ADD COLUMN {add_column_entry.get()} {datatype_add_option.get()}"
                 if datatype_add_option.get() not in datatype_list[-1:-6:-1]:
                     str_exec += f"({size_entry.get()})"
-                if constraint_add_option.get() == constraint_list[-2]:
-                    str_exec += f" {constraint_add_option.get()} '{constraint_entry.get()}'"
-                elif constraint_add_option.get() != constraint_list[-1]:
+                if constraint_add_option.get() != constraint_list[-1]:
                     str_exec += f" {constraint_add_option.get()}"
+                elif constraint_add_option.get() == constraint_list[-2]:
+                    str_exec += f" {constraint_add_option.get()} '{constraint_entry.get()}'"
                 try:
                     cur1.execute(str_exec)
                     add_column.destroy()
@@ -969,14 +969,14 @@ def password_submit(event=None):
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
     try:
-        con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8")
+        con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8",collation="utf8mb4_general_ci")
         window.geometry('1420x780')
         window.resizable(True,True)
         pass_frame.destroy()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
     except:
-        messagebox.showerror(title='Parameters mismatch',message='Wrong Password or redefine username and hostname!')
+        messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
