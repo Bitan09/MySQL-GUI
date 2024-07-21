@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 from idlelib.tooltip import Hovertip
+from sys import platform
 
 window = Tk()
 
@@ -589,22 +590,17 @@ def rename_host_user():
         global username
         global hostname
         user = user_add_entry.get()
-        user_add_entry.delete(0,END)
-        userfile_objw = open("userfile.dat","wb")
-        pickle.dump(user,userfile_objw)
-        userfile_objw.close()
         host = host_add_entry.get()
+        user_add_entry.delete(0,END)
         host_add_entry.delete(0,END)
-        hostfile_objw = open("hostfile.dat","wb")
-        pickle.dump(host,hostfile_objw)
-        hostfile_objw.close()
+        userhost_objw = open("userhost.txt","w")
+        userhost_objw.write(f"{user}@{host}")
 
-        userfile_objr = open("userfile.dat","rb")
-        username = pickle.load(userfile_objr)
-        userfile_objr.close()
-        hostfile_objr = open("hostfile.dat","rb")
-        hostname = pickle.load(hostfile_objr)
-        hostfile_objr.close()
+        userhost_objr = open("userhost.txt","r")
+        userhost_str = userhost_objr.read()
+        userhost = userhost_str.split('@')
+        user = userhost[0]
+        host = userhost[1]
         user_toplevel.destroy()
 
     user_toplevel = Toplevel()
@@ -627,12 +623,9 @@ def rename_host_user():
     user_add_entry.focus()
 
 try:
-    userfile_objr = open("userfile.dat","rb")
-    username = pickle.load(userfile_objr)
-    userfile_objr.close()
-    hostfile_objr = open("hostfile.dat","rb")
-    hostname = pickle.load(hostfile_objr)
-    hostfile_objr.close()
+    userhost_objr = open("userhost.txt","r")
+    userhost_str = userhost_objr.read()
+    userhost = userhost_str.split('@')
 except:rename_host_user()
 
 def table_dml():
@@ -877,6 +870,15 @@ def data_table():
     show_tables.grid(row=2,column=0,columnspan=3)
     table_frame_update()
 
+def checkos() -> str:
+    if platform == "win32":
+        return '370x64'
+    elif platform == "linux":
+        return '430x75'
+    else:
+        messagebox.showwarning(title="Warning!!",message=f"Program not yet tested for {platform}")
+        return '430x75'
+
 def show_password():
     global passeye_bool
     passeye_bool = not passeye_bool
@@ -899,6 +901,8 @@ def database_window():
     window.title("Database")
     global cur1
     cur1 = con1.cursor()
+    maindb_frame = Frame(window,bg='#000000')
+    maindb_frame.pack()
     def database_frame_update():
         global databases_list
         global database_frame
@@ -907,14 +911,11 @@ def database_window():
             global dbname
             dbname = databases_list[database_int.get()][0]
             cur1.execute(f'use {dbname}')
-            Select_database.destroy()
-            database_frame.destroy()
-            new_database_frame.destroy()
-            del_database_frame.destroy()
+            maindb_frame.destroy()
             data_table()
         databases_list = cur1.fetchall()
         database_int = IntVar()
-        database_frame = Frame(window,pady=10,bg='#000000')
+        database_frame = Frame(maindb_frame,pady=10,bg='#000000')
         database_frame.grid(row=1,column=0,columnspan=2)
         for index in range(0,len(databases_list)):
             new_row = index//colsize
@@ -939,11 +940,11 @@ def database_window():
                 database_frame_update()
             except: messagebox.showerror(title="Database doesn't exist",message='Put an existing database!')
     
-    Select_database = Label(window,text='Select prefered database',padx=20,pady=10,font=('Calibri',40),bg='#000000',fg='#FFFFFF')
+    Select_database = Label(maindb_frame,text='Select prefered database',padx=20,pady=10,font=('Calibri',40),bg='#000000',fg='#FFFFFF')
     Select_database.grid(row=0,column=0,columnspan=2)
     database_frame_update()
 
-    new_database_frame = Frame(window,bg='#000000')
+    new_database_frame = Frame(maindb_frame,bg='#000000')
     new_database_label = Label(new_database_frame,text='Add new database',fg='#FFFFFF',bg='#000000',font=30)
     new_database_entry = Entry(new_database_frame,width=20)
     new_database_submit = Button(new_database_frame,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=add_new_database)
@@ -952,7 +953,7 @@ def database_window():
     new_database_submit.grid(row=0,column=2)
     new_database_frame.grid(row=2,column=0,)
 
-    del_database_frame = Frame(window,bg='#000000')
+    del_database_frame = Frame(maindb_frame,bg='#000000')
     del_database_label = Label(del_database_frame,text='Delete a database',fg='#FFFFFF',bg='#000000',font=30)
     del_database_entry = Entry(del_database_frame,width=20)
     del_database_submit = Button(del_database_frame,text='Submit',bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=drop_database)
@@ -983,7 +984,7 @@ open_eye = PhotoImage(file='eyeopen.png')
 back_image = PhotoImage(file='back.png')
 window.config(background='#000000')
 
-window.geometry('370x64')
+window.geometry(checkos())
 window.title('Enter credentials')
 
 pass_frame = Frame(window,pady=10,bg='#000000')
