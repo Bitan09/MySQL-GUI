@@ -595,12 +595,14 @@ def rename_host_user():
         host_add_entry.delete(0,END)
         userhost_objw = open("userhost.txt","w")
         userhost_objw.write(f"{user}@{host}")
+        userhost_objw.close()
 
         userhost_objr = open("userhost.txt","r")
         userhost_str = userhost_objr.read()
+        userhost_objr.close()
         userhost = userhost_str.split('@')
-        user = userhost[0]
-        host = userhost[1]
+        username = userhost[0]
+        hostname = userhost[1]
         user_toplevel.destroy()
 
     user_toplevel = Toplevel()
