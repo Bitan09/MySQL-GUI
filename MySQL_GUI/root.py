@@ -22,6 +22,11 @@ conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not
 
 colsize = 4
 
+def menufuncn():
+    mainmenu = Menu(window)
+    window.config(menu=mainmenu)
+    mainmenu.add_command(label="Commit",command=con1.commit)
+
 def clean_treview(treeview:ttk.Treeview):
     for record in treeview.get_children():
         treeview.delete(record)
@@ -628,6 +633,8 @@ try:
     userhost_objr = open("userhost.txt","r")
     userhost_str = userhost_objr.read()
     userhost = userhost_str.split('@')
+    username = userhost[0]
+    hostname = userhost[1]
 except:rename_host_user()
 
 def table_dml():
@@ -973,13 +980,15 @@ def password_submit(event=None):
     pass_entry.delete(0,END)
     try:
         con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8",collation="utf8mb4_general_ci")
+    except:
+        messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
+    else:
         window.geometry('1420x780')
         window.resizable(True,True)
+        menufuncn()
         pass_frame.destroy()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
-    except:
-        messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
