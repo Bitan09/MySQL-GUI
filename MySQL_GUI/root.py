@@ -6,9 +6,9 @@ from tkinter import ttk
 from idlelib.tooltip import Hovertip
 from sys import platform
 
-window = Tk()
+passwindow = Tk()
 
-window.resizable(False,False)
+passwindow.resizable(False,False)
 
 passeye_bool = False
 
@@ -22,10 +22,28 @@ conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not
 
 colsize = 4
 
+def customcommand():
+    def execcommand():
+        try:
+            command_to_exec = cmdentry.get("1.0", "end-1c")
+            cur1.execute(command_to_exec)
+            cmdentry.delete("1.0", "end-1c")
+        except Exception as e:
+            messagebox.showerror(title="Error executing command",message=e)
+    cmd = Toplevel()
+    cmd.config(bg="#000000")
+    cmdlabel = Label(cmd,text="Type command:",fg="#FFFFFF",bg="#000000")
+    cmdentry = Text(cmd,wrap=WORD)
+    cmdsubmit = Button(cmd,text="Submit",bg="#000000",fg="#00FF00",command=execcommand)
+    cmdlabel.grid(row=0,column=0,sticky=W)
+    cmdsubmit.grid(row=0,column=1,sticky=E)
+    cmdentry.grid(row=1,column=0,columnspan=2)
+
 def menufuncn():
     mainmenu = Menu(window)
     window.config(menu=mainmenu)
     mainmenu.add_command(label="Commit",command=con1.commit)
+    mainmenu.add_command(label="Run command",command=customcommand)
 
 def clean_treview(treeview:ttk.Treeview):
     for record in treeview.get_children():
@@ -976,6 +994,7 @@ def database_window():
 
 def password_submit(event=None):
     global con1
+    global window
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
     try:
@@ -983,22 +1002,24 @@ def password_submit(event=None):
     except:
         messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
     else:
+        passwindow.destroy()
+        window = Tk()
+        window.config(background='#000000')
         window.geometry('1420x780')
         window.resizable(True,True)
         menufuncn()
-        pass_frame.destroy()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
 back_image = PhotoImage(file='back.png')
-window.config(background='#000000')
+passwindow.config(background='#000000')
 
-window.geometry(checkos())
-window.title('Enter credentials')
+passwindow.geometry(checkos())
+passwindow.title('Enter credentials')
 
-pass_frame = Frame(window,pady=10,bg='#000000')
+pass_frame = Frame(passwindow,pady=10,bg='#000000')
 pass_label = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
 pass_entry = Entry(pass_frame,width=20,font=('consolas',14),show='*')
 pass_show = Button(pass_frame,image=close_eye,bg='#0d0d0d',command=show_password,activebackground='#0d0d0d')
@@ -1013,7 +1034,7 @@ pass_show.grid(row=0,column=2)
 pass_submit.grid(row=0,column=3)
 rename.grid(row=1,column=0,columnspan=4)
 pass_frame.pack(fill=BOTH)
-window.mainloop()
+passwindow.mainloop()
 try:
     con1.commit()
     con1.close()
