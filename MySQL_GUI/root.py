@@ -1,9 +1,8 @@
 import mysql.connector as sql
-import pickle
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
-from idlelib.tooltip import Hovertip
+from tktooltip import ToolTip
 from sys import platform
 
 passwindow = Tk()
@@ -30,14 +29,22 @@ def customcommand():
             cmdentry.delete("1.0", "end-1c")
         except Exception as e:
             messagebox.showerror(title="Error executing command",message=e)
+        else:
+            a = cur1.fetchall()
+            cmdshow.delete("1.0", "end-1c")
+            cmdshow.config(state=NORMAL)
+            cmdshow.insert(END,f"{a}")
+            cmdshow.config(state=DISABLED)
     cmd = Toplevel()
     cmd.config(bg="#000000")
     cmdlabel = Label(cmd,text="Type command:",fg="#FFFFFF",bg="#000000")
     cmdentry = Text(cmd,wrap=WORD)
+    cmdshow = Text(cmd,wrap=WORD,state=DISABLED)
     cmdsubmit = Button(cmd,text="Submit",bg="#000000",fg="#00FF00",command=execcommand)
     cmdlabel.grid(row=0,column=0,sticky=W)
     cmdsubmit.grid(row=0,column=1,sticky=E)
     cmdentry.grid(row=1,column=0,columnspan=2)
+    cmdshow.grid(row=2,column=0,columnspan=2)
 
 def menufuncn():
     mainmenu = Menu(window)
@@ -291,7 +298,7 @@ def insert_values(frame:Frame,tablename):
         col_entry = Entry(col_frame,font=(None,15))
         col_vals.append(col_entry)
         col_entry.grid(row=0,column=1)
-        Hovertip(col_entry,f"{description[i][1:4:2]}")
+        ToolTip(col_entry,f"{description[i][1:4:2]}")
         col_frame.grid(row=i//3,column=i%3,sticky=W,padx=10,pady=10)
     column_value.pack(anchor=NW)
     submit_button = Button(insertion_frame,text='Submit',command=insert_submit,bg='#444444',fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF')
@@ -871,7 +878,7 @@ def data_table():
             new_row = index//colsize
             table_radio = Radiobutton(table_frame,variable=table_int,text=table_list[index][0],value=index,font=(None,20),indicatoron=0,width=20,command=select_table)
             table_radio.grid(row=(new_row),column=(index%colsize),sticky=W)
-            Hovertip(table_radio,f'{table_list[index][0]}')
+            ToolTip(table_radio,f'{table_list[index][0]}')
         table_frame.pack()
 
     global table_selection
@@ -948,7 +955,7 @@ def database_window():
             new_row = index//colsize
             database_radio = Radiobutton(database_frame,variable=database_int,text=databases_list[index][0],value=index,font=(None,20),indicatoron=0,width=20,command=database_submit)
             database_radio.grid(row=(new_row),column=(index%colsize))
-            Hovertip(database_radio,f'{databases_list[index][0]}')
+            ToolTip(database_radio,f'{databases_list[index][0]}')
     def add_new_database(event=None):
         new_database = new_database_entry.get()
         new_database_entry.delete(0,END)
@@ -995,6 +1002,7 @@ def database_window():
 def password_submit(event=None):
     global con1
     global window
+    global back_image
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
     try:
@@ -1004,6 +1012,7 @@ def password_submit(event=None):
     else:
         passwindow.destroy()
         window = Tk()
+        back_image = PhotoImage(file='back.png')
         window.config(background='#000000')
         window.geometry('1420x780')
         window.resizable(True,True)
@@ -1013,7 +1022,6 @@ def password_submit(event=None):
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
-back_image = PhotoImage(file='back.png')
 passwindow.config(background='#000000')
 
 passwindow.geometry(checkos())
