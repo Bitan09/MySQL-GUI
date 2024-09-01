@@ -21,6 +21,10 @@ conditions = ["=","<>",">","<",">=","<=","between","in","like","is null","is not
 
 colsize = 4
 
+def clean_treview(treeview:ttk.Treeview):
+    for record in treeview.get_children():
+        treeview.delete(record)
+
 def customcommand():
     def execcommand():
         try:
@@ -30,31 +34,51 @@ def customcommand():
         except Exception as e:
             messagebox.showerror(title="Error executing command",message=e)
         else:
+            clean_treview(cmd_treeview)
             a = cur1.fetchall()
-            cmdshow.delete("1.0", "end-1c")
-            cmdshow.config(state=NORMAL)
-            cmdshow.insert(END,f"{a}")
-            cmdshow.config(state=DISABLED)
+            cols = cur1.column_names
+            cmd_treeview['columns'] = cols
+            cmd_treeview.column('#0',width=0,stretch=NO)
+            cmd_treeview.heading('#0',text='')
+            for i in range(len(cols)):
+                cmd_treeview.column(cols[i],anchor=W,width=250)
+                cmd_treeview.heading(cols[i],text=cols[i],anchor=W)
+            cmd_treeview.tag_configure('oddrow',background="#E6F5FE")
+            cmd_treeview.tag_configure('evenrow',background="#49BDFF")
+            for i in range(len(a)):
+                if i%2 == 0:
+                    cmd_treeview.insert(parent='',index=END,iid=i,text="",values=a[i],tags=('evenrow'))
+                else:
+                    cmd_treeview.insert(parent='',index=END,iid=i,text="",values=a[i],tags=('oddrow'))
     cmd = Toplevel()
     cmd.config(bg="#000000")
     cmdlabel = Label(cmd,text="Type command:",fg="#FFFFFF",bg="#000000")
     cmdentry = Text(cmd,wrap=WORD)
-    cmdshow = Text(cmd,wrap=WORD,state=DISABLED)
     cmdsubmit = Button(cmd,text="Submit",bg="#000000",fg="#00FF00",command=execcommand)
     cmdlabel.grid(row=0,column=0,sticky=W)
     cmdsubmit.grid(row=0,column=1,sticky=E)
     cmdentry.grid(row=1,column=0,columnspan=2)
-    cmdshow.grid(row=2,column=0,columnspan=2)
+    new_frame = Frame(cmd)
+    style_tree = ttk.Style()
+    style_tree.theme_use('clam')
+    style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC",font=(None,15))
+    style_tree.configure("Treeview.Heading",font=(None,15,"bold"))
+    style_tree.map("Treeview",background=[('selected',"#01AB2C")])
+    new_frame.grid(row=2,column=0,columnspan=2)
+    scrollbary = ttk.Scrollbar(new_frame,orient=VERTICAL)
+    scrollbarx = ttk.Scrollbar(new_frame,orient=HORIZONTAL)
+    cmd_treeview = ttk.Treeview(new_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
+    scrollbarx.pack(side=TOP,fill=X)
+    scrollbary.pack(side=LEFT,fill=Y)
+    cmd_treeview.pack(side=LEFT,fill=BOTH)
+    scrollbary.config(command=cmd_treeview.yview)
+    scrollbarx.config(command=cmd_treeview.xview)
 
 def menufuncn():
     mainmenu = Menu(window)
     window.config(menu=mainmenu)
     mainmenu.add_command(label="Commit",command=con1.commit)
     mainmenu.add_command(label="Run command",command=customcommand)
-
-def clean_treview(treeview:ttk.Treeview):
-    for record in treeview.get_children():
-        treeview.delete(record)
 
 def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
     try:
