@@ -1,9 +1,11 @@
-import mysql.connector as sql
-from tkinter import *
-from tkinter import messagebox
-from tkinter import ttk
-from idlelib.tooltip import Hovertip
-from sys import platform
+try:
+    import mysql.connector as sql
+    from tkinter import *
+    from tkinter import messagebox
+    from tkinter import ttk
+    from idlelib.tooltip import Hovertip
+    from sys import platform
+finally:print("!!!All required modules are not installed!!!")
 
 passwindow = Tk()
 
@@ -74,10 +76,14 @@ def customcommand():
     scrollbary.config(command=cmd_treeview.yview)
     scrollbarx.config(command=cmd_treeview.xview)
 
+def commitfuncn():
+    con1.commit()
+    messagebox.showinfo(title="Commit successful",message="All changes have been commited")
+
 def menufuncn():
     mainmenu = Menu(window)
     window.config(menu=mainmenu)
-    mainmenu.add_command(label="Commit",command=con1.commit)
+    mainmenu.add_command(label="Commit",command=commitfuncn)
     mainmenu.add_command(label="Run command",command=customcommand)
 
 def delete_from_table(table,where_str,treeview:ttk.Treeview,button:Button):
@@ -1024,16 +1030,26 @@ def database_window():
     del_database_entry.bind('<Return>',drop_database)
 
 def password_submit(event=None):
-    global con1
     global window
     global back_image
+    def method1():
+        global con1
+        try:
+            con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8")
+            return True
+        except:
+            return False
+    def method2():
+        global con1
+        try:
+            con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8",collation="utf8mb4_general_ci")
+            return True
+        except:
+            return False
     passwd_value = pass_entry.get()
     pass_entry.delete(0,END)
-    try:
-        con1 = sql.connect(host=hostname,user=username,passwd=passwd_value,charset="utf8",collation="utf8mb4_general_ci")
-    except:
-        messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
-    else:
+    success = method1() or method2()
+    if success:
         passwindow.destroy()
         window = Tk()
         back_image = PhotoImage(file='back.png')
@@ -1043,6 +1059,8 @@ def password_submit(event=None):
         menufuncn()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
+    else:
+        messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
