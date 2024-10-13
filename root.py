@@ -5,7 +5,7 @@ try:
     from tkinter import ttk
     from idlelib.tooltip import Hovertip
     from sys import platform
-finally:print("!!!All required modules are not installed!!!")
+except:print("!!!All required modules are not installed!!!")
 
 passwindow = Tk()
 
@@ -28,6 +28,24 @@ def clean_treview(treeview:ttk.Treeview):
         treeview.delete(record)
 
 def customcommand():
+    def commandtable():
+        global cmd_treeview
+        global new_frame
+        new_frame = Frame(cmd)
+        style_tree = ttk.Style()
+        style_tree.theme_use('clam')
+        style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC",font=(None,15))
+        style_tree.configure("Treeview.Heading",font=(None,15,"bold"))
+        style_tree.map("Treeview",background=[('selected',"#01AB2C")])
+        new_frame.grid(row=2,column=0,columnspan=2)
+        cmd_scrollbary = ttk.Scrollbar(new_frame,orient=VERTICAL)
+        cmd_scrollbarx = ttk.Scrollbar(new_frame,orient=HORIZONTAL)
+        cmd_treeview = ttk.Treeview(new_frame,yscrollcommand=cmd_scrollbary.set,xscrollcommand=cmd_scrollbarx.set)
+        cmd_scrollbarx.pack(side=TOP,fill=X)
+        cmd_scrollbary.pack(side=LEFT,fill=Y)
+        cmd_treeview.pack(side=LEFT,fill=BOTH)
+        cmd_scrollbary.config(command=cmd_treeview.yview)
+        cmd_scrollbarx.config(command=cmd_treeview.xview)
     def execcommand():
         try:
             command_to_exec = cmdentry.get("1.0", "end-1c")
@@ -36,22 +54,27 @@ def customcommand():
         except Exception as e:
             messagebox.showerror(title="Error executing command",message=e)
         else:
-            clean_treview(cmd_treeview)
             a = cur1.fetchall()
-            cols = cur1.column_names
-            cmd_treeview['columns'] = cols
-            cmd_treeview.column('#0',width=0,stretch=NO)
-            cmd_treeview.heading('#0',text='')
-            for i in range(len(cols)):
-                cmd_treeview.column(cols[i],anchor=W,width=250)
-                cmd_treeview.heading(cols[i],text=cols[i],anchor=W)
-            cmd_treeview.tag_configure('oddrow',background="#E6F5FE")
-            cmd_treeview.tag_configure('evenrow',background="#49BDFF")
-            for i in range(len(a)):
-                if i%2 == 0:
-                    cmd_treeview.insert(parent='',index=END,iid=i,text="",values=a[i],tags=('evenrow'))
-                else:
-                    cmd_treeview.insert(parent='',index=END,iid=i,text="",values=a[i],tags=('oddrow'))
+            if len(a) == 0:
+                try:new_frame.destroy()
+                except:pass
+            else:
+                commandtable()
+                clean_treview(cmd_treeview)
+                cols = cur1.column_names
+                cmd_treeview['columns'] = cols
+                cmd_treeview.column('#0',width=0,stretch=NO)
+                cmd_treeview.heading('#0',text='')
+                for i in range(len(cols)):
+                    cmd_treeview.column(cols[i],anchor=W,width=250)
+                    cmd_treeview.heading(cols[i],text=cols[i],anchor=W)
+                cmd_treeview.tag_configure('oddrow',background="#E6F5FE")
+                cmd_treeview.tag_configure('evenrow',background="#49BDFF")
+                for i in range(len(a)):
+                    if i%2 == 0:
+                        cmd_treeview.insert(parent='',index=END,iid=i,text="",values=a[i],tags=('evenrow'))
+                    else:
+                        cmd_treeview.insert(parent='',index=END,iid=i,text="",values=a[i],tags=('oddrow'))
     cmd = Toplevel()
     cmd.config(bg="#000000")
     cmdlabel = Label(cmd,text="Type command:",fg="#FFFFFF",bg="#000000")
@@ -60,21 +83,6 @@ def customcommand():
     cmdlabel.grid(row=0,column=0,sticky=W)
     cmdsubmit.grid(row=0,column=1,sticky=E)
     cmdentry.grid(row=1,column=0,columnspan=2)
-    new_frame = Frame(cmd)
-    style_tree = ttk.Style()
-    style_tree.theme_use('clam')
-    style_tree.configure("Treeview",background="#BCBCBC",rowheight=25,fieldbackground="#BCBCBC",font=(None,15))
-    style_tree.configure("Treeview.Heading",font=(None,15,"bold"))
-    style_tree.map("Treeview",background=[('selected',"#01AB2C")])
-    new_frame.grid(row=2,column=0,columnspan=2)
-    scrollbary = ttk.Scrollbar(new_frame,orient=VERTICAL)
-    scrollbarx = ttk.Scrollbar(new_frame,orient=HORIZONTAL)
-    cmd_treeview = ttk.Treeview(new_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
-    scrollbarx.pack(side=TOP,fill=X)
-    scrollbary.pack(side=LEFT,fill=Y)
-    cmd_treeview.pack(side=LEFT,fill=BOTH)
-    scrollbary.config(command=cmd_treeview.yview)
-    scrollbarx.config(command=cmd_treeview.xview)
 
 def commitfuncn():
     con1.commit()
