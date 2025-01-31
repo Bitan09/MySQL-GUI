@@ -1,11 +1,8 @@
-try:
-    import mysql.connector as sql
-    from tkinter import *
-    from tkinter import messagebox
-    from tkinter import ttk
-    from idlelib.tooltip import Hovertip
-    from sys import platform
-except:print("!!!All required modules are not installed!!!")
+import mysql.connector as sql
+from tkinter import *
+from tkinter import messagebox
+from tkinter import ttk
+from idlelib.tooltip import Hovertip
 
 passwindow = Tk()
 
@@ -348,15 +345,12 @@ def delete_values(frame:Frame,table):
             cur1.execute(f"truncate {table}")
             new_frame.destroy()
             show_table(show_values_table,table)
-
     truncate_button = Button(frame,text='Delete all values',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=truncate_confirm)
     truncate_button.pack(pady=10)
     delete_frame = Frame(frame)
     delete_frame.pack()
-
     delete_table_frame = Frame(frame)
     delete_table_frame.pack()
-
     scrollbary = ttk.Scrollbar(delete_table_frame,orient=VERTICAL)
     scrollbarx = ttk.Scrollbar(delete_table_frame,orient=HORIZONTAL)
     delete_treeview = ttk.Treeview(delete_table_frame,yscrollcommand=scrollbary.set,xscrollcommand=scrollbarx.set)
@@ -373,14 +367,11 @@ def delete_values(frame:Frame,table):
     delete_treeview.pack(side=LEFT,fill=BOTH)
     scrollbary.config(command=delete_treeview.yview)
     scrollbarx.config(command=delete_treeview.xview)
-
     delete_rows = Button(frame,text='Delete rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:delete_from_table(table,str_where,delete_treeview,delete_rows),state=DISABLED)
     delete_rows.pack()
-
     where_frame(delete_frame,delete_treeview,table,"Delete where",delete_rows)
 
 def modify_table_(frame:Frame,table):
-
     def add_column():
         def add_new_column():
             if size_entry.get() == "":messagebox.showwarning(title="No size given",message="Enter size of the column")
@@ -489,7 +480,6 @@ def modify_table_(frame:Frame,table):
                     elif constraint_mod_option.get() == constraint_list[-2]:
                         str_exec += f" {constraint_mod_option.get()} '{constraint_entry.get()}'"
                     try:
-                        print(str_exec)
                         cur1.execute(str_exec)
                         mod_column.destroy()
                         dml_commands_frame.destroy()
@@ -621,7 +611,6 @@ def update_values(frame:Frame,table):
     value_entry.grid(row=0,column=3)
     update_rows = Button(update_value_set_frame,text='Update rows',bg='#444444',font=(None,15) ,fg='#00FFFF',activebackground='#444444',activeforeground='#00FFFF',command=lambda:update_from_table(table,value_entry,col_update,str_where,update_treeview,update_rows),state=DISABLED)
     update_rows.grid(row=0,column=4)
-
     where_frame(update_frame,update_treeview,table,"Update where",update_rows)
 
 def table_creation(tablename,tablelist):
@@ -650,8 +639,7 @@ def checking(val):
     elif len(val.get().split()) > 1:
         messagebox.showwarning(title="Error naming",message="Names with space not allowed")
         return False
-    else:
-        return True
+    else:return True
 
 def rename_host_user():
     def user_host_add_submit_funcn():
@@ -746,7 +734,6 @@ def data_table():
                             check_bool = checking(index[i])
                         if i == 1:
                             if index[i].get() in datatype_list[-1:-6:-1]:
-                                print("x")
                                 index[i+1].delete(0,END)
                                 index[i+1].insert(0,"1")
                                 index[i+1].config(state=DISABLED)
@@ -942,15 +929,6 @@ def data_table():
     show_tables.grid(row=2,column=0,columnspan=3)
     table_frame_update()
 
-def checkos() -> str:
-    if platform == "win32":
-        return '370x64'
-    elif platform == "linux":
-        return '430x75'
-    else:
-        messagebox.showwarning(title="Warning!!",message=f"Program not yet tested for {platform}")
-        return '430x75'
-
 def show_password():
     global passeye_bool
     passeye_bool = not passeye_bool
@@ -1015,7 +993,6 @@ def database_window():
     Select_database = Label(maindb_frame,text='Select prefered database',padx=20,pady=10,font=('Calibri',40),bg='#000000',fg='#FFFFFF')
     Select_database.grid(row=0,column=0,columnspan=2)
     database_frame_update()
-
     new_database_frame = Frame(maindb_frame,bg='#000000')
     new_database_label = Label(new_database_frame,text='Add new database',fg='#FFFFFF',bg='#000000',font=30)
     new_database_entry = Entry(new_database_frame,width=20)
@@ -1024,7 +1001,6 @@ def database_window():
     new_database_entry.grid(row=0,column=1)
     new_database_submit.grid(row=0,column=2)
     new_database_frame.grid(row=2,column=0,)
-
     del_database_frame = Frame(maindb_frame,bg='#000000')
     del_database_label = Label(del_database_frame,text='Delete a database',fg='#FFFFFF',bg='#000000',font=30)
     del_database_entry = Entry(del_database_frame,width=20)
@@ -1033,7 +1009,6 @@ def database_window():
     del_database_entry.grid(row=0,column=1)
     del_database_submit.grid(row=0,column=2)
     del_database_frame.grid(row=2,column=1,)
-
     new_database_entry.bind('<Return>',add_new_database)
     del_database_entry.bind('<Return>',drop_database)
 
@@ -1067,16 +1042,13 @@ def password_submit(event=None):
         menufuncn()
         database_window()
         messagebox.showinfo(title='Correct Password',message='Password entered by user is correct!\nConnection succesful!')
-    else:
-        messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
+    else:messagebox.showerror(title='Parameters mismatch',message=f"Wrong Password or redefine username and hostname!")
 
 close_eye = PhotoImage(file='eyeclose.png')
 open_eye = PhotoImage(file='eyeopen.png')
 passwindow.config(background='#000000')
-
-passwindow.geometry(checkos())
+passwindow.geometry("430x75")
 passwindow.title('Enter credentials')
-
 pass_frame = Frame(passwindow,pady=10,bg='#000000')
 pass_label = Label(pass_frame,text='Enter Password',bg='#000000',fg='#F7F308')
 pass_entry = Entry(pass_frame,width=20,font=('consolas',14),show='*')
@@ -1085,7 +1057,6 @@ pass_submit = Button(pass_frame,text='Submit',command=password_submit,bg='#44444
 rename = Button(pass_frame,text='Redefine user and host',command=rename_host_user,bg='#444444',fg='#FFFF00',activebackground='#444444',activeforeground='#FFFF00')
 pass_entry.focus()
 pass_entry.bind('<Return>',password_submit)
-
 pass_label.grid(row=0,column=0)
 pass_entry.grid(row=0,column=1)
 pass_show.grid(row=0,column=2)
